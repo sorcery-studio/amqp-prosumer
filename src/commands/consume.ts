@@ -7,16 +7,9 @@ import {ICommandFactory} from "./common";
 
 const log = debug("amqp-prosumer:consumer");
 
-export interface IConsumeAction {
-    (msg: ConsumeMessage | null): any;
-}
+type ConsumerFn = (msg: ConsumeMessage) => any;
 
-export const defOnMessage = (msg: ConsumeMessage | null) => {
-    if (!msg) {
-        log("Consumer cancelled");
-        return;
-    }
-
+export const defOnMessage = (msg: ConsumeMessage) => {
     log("Consuming message");
 
     const write = msg.content
@@ -25,11 +18,16 @@ export const defOnMessage = (msg: ConsumeMessage | null) => {
         .replace(/"$/, "");
 
     fs.writeFileSync(1, write + "\n");
+
 }
 
-function createAction(onMessage: IConsumeAction) {
+function createAction(onMessage: ConsumerFn) {
     return async (command: Command) => {
         log("Staring the consumer process");
+
+        if (!command.exchange && !command.queue) {
+            throw new Error("Either exchange or queue have to be specified");
+        }
 
         const connection = await amqplib.connect(command.host);
         log("Connection to %s established", command.host);
@@ -42,19 +40,27 @@ function createAction(onMessage: IConsumeAction) {
 
         if (command.exchange) {
             exchange = await channel.assertExchange(command.exchange, "topic");
+            log("Exchange %s asserted", exchange.exchange);
+
             queue = await channel.assertQueue(command.queue, {durable: false, autoDelete: true});
+            log("Queue %s asserted", queue.queue);
+
             await channel.bindQueue(queue.queue, exchange.exchange, "#");
-        } else if (command.queue) {
+            log("Bound queue %s to exchange", queue.queue, exchange.exchange);
+        } else {
             queue = await channel.assertQueue(command.queue, {durable: false, autoDelete: true});
         }
 
-        if (!queue) {
-            console.error("No queue to bind to. Bye!");
-            await connection.close();
-            return;
-        }
+        const {consumerTag} = await channel.consume(queue.queue, (msg) => {
+            if (!msg) {
+                log("Consumer cancelled");
+                return;
+            }
 
-        const {consumerTag} = await channel.consume(queue.queue, onMessage);
+            onMessage(msg)
+
+            channel.ack(msg);
+        });
         log("Consumer started, input queue %s, consumer tag: %s", queue.queue, consumerTag)
 
         const shutdown = async () => {
@@ -74,7 +80,7 @@ function createAction(onMessage: IConsumeAction) {
 
 export function buildConsumeCommand(
     commandFactory: ICommandFactory,
-    onMessage: IConsumeAction = defOnMessage
+    onMessage: ConsumerFn = defOnMessage
 ): Command {
     const consumeCommand = commandFactory("consume");
 

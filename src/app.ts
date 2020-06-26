@@ -10,5 +10,8 @@ export function createAndRun(version: string, createCommand: ICommandFactory): v
     program.addCommand(buildConsumeCommand(createCommand));
     program.addCommand(buildProduceCommand(createCommand));
 
-    program.parseAsync(process.argv).catch((err) => console.error(err));
+    program.parseAsync(process.argv).catch((err) => {
+        console.error(`ERROR: ${err.message}`);
+        process.exit(1);
+    });
 }

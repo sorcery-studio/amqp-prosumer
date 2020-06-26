@@ -18,7 +18,7 @@
   },
   "scripts": {
     "prebuild": "rimraf dist/",
-    "build": "tsc --project tsconfig.json && cp package*.json README.md dist/",
+    "build": "tsc --project tsconfig.json && cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "npm run build",
     "test": "jest dist/"
   },
