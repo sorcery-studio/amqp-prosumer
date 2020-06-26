@@ -2,6 +2,7 @@
   "name": "amqp-prosumer",
   "version": "0.1.0",
   "description": "AMQP-based Consumer/Producer tool",
+  "private": true,
   "keywords": [
     "amqp",
     "consumer",
@@ -9,7 +10,6 @@
     "prosumer",
     "cli"
   ],
-  "private": true,
   "bin": {
     "amqp-prosumer": "./src/index.js"
   },
@@ -17,25 +17,24 @@
     "prebuild": "rimraf dist/",
     "build": "tsc --project tsconfig.json && cp package.json dist/",
     "pretest": "npm run build",
-    "test": "jest dist/",
-    "start:consumer": "ts-node src/commands/consume -e ExampleExchange"
+    "test": "jest dist/"
   },
   "author": "Grzegorz Godlewski <ggodlewski@sorcerystudio.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/amqplib": "^0.5.13",
-    "@types/commander": "^2.12.2",
-    "@types/debug": "^4.1.5",
-    "@types/jest": "^26.0.0",
-    "@types/node": "^14.0.13",
-    "jest": "^26.0.1",
-    "rimraf": "^3.0.2",
-    "ts-node": "^8.10.2",
-    "typescript": "^3.9.5"
+    "@types/amqplib": "0.5.13",
+    "@types/commander": "2.12.2",
+    "@types/debug": "4.1.5",
+    "@types/jest": "26.0.0",
+    "@types/node": "14.0.13",
+    "jest": "26.0.1",
+    "rimraf": "3.0.2",
+    "ts-node": "8.10.2",
+    "typescript": "3.9.5"
   },
   "dependencies": {
-    "amqplib": "^0.5.6",
-    "commander": "^5.1.0",
-    "debug": "^4.1.1"
+    "amqplib": "0.5.6",
+    "commander": "5.1.0",
+    "debug": "4.1.1"
   }
 }
