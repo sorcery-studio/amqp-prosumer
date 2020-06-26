@@ -15,7 +15,7 @@
   },
   "scripts": {
     "prebuild": "rimraf dist/",
-    "build": "tsc --project tsconfig.json && cp package.json dist/",
+    "build": "tsc --project tsconfig.json && cp package*.json README.md dist/",
     "pretest": "npm run build",
     "test": "jest dist/"
   },
@@ -36,5 +36,8 @@
     "amqplib": "0.5.6",
     "commander": "5.1.0",
     "debug": "4.1.1"
+  },
+  "engines": {
+    "node": ">=10"
   }
 }
