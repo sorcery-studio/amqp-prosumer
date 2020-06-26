@@ -2,7 +2,10 @@
   "name": "amqp-prosumer",
   "version": "0.1.0",
   "description": "AMQP-based Consumer/Producer tool",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "github:SorceryStudio/amqp-prosumer"
+  },
   "keywords": [
     "amqp",
     "consumer",
