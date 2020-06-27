@@ -2,7 +2,7 @@ import fs from "fs";
 import {debug} from "debug";
 import {Command} from "commander";
 import * as amqplib from "amqplib";
-import {ICommandFactory} from "./common";
+import {CommandFactoryFn} from "./common";
 import {Channel} from "amqplib";
 
 const log = debug("amqp-prosumer:producer");
@@ -76,7 +76,7 @@ function createAction() {
     }
 }
 
-export function buildProduceCommand(createCommand: ICommandFactory): Command {
+export function buildProduceCommand(createCommand: CommandFactoryFn): Command {
     const produceCommand = createCommand("produce");
 
     produceCommand.option("-h, --host [url]", "The URL to the RabbitMQ instance", "amqp://localhost");

@@ -1,8 +1,8 @@
 import {buildConsumeCommand} from "./commands/consume";
 import {buildProduceCommand} from "./commands/produce";
-import {ICommandFactory} from "./commands/common";
+import {CommandFactoryFn} from "./commands/common";
 
-export function createAndRun(version: string, createCommand: ICommandFactory): void {
+export function createAndRun(version: string, createCommand: CommandFactoryFn): void {
     const program = createCommand();
 
     program.version(version);

@@ -3,7 +3,7 @@ import {debug} from "debug";
 import {Command} from "commander";
 import * as amqplib from "amqplib";
 import {ConsumeMessage} from "amqplib";
-import {ICommandFactory} from "./common";
+import {CommandFactoryFn} from "./common";
 
 const log = debug("amqp-prosumer:consumer");
 
@@ -79,7 +79,7 @@ function createAction(onMessage: ConsumerFn) {
 }
 
 export function buildConsumeCommand(
-    commandFactory: ICommandFactory,
+    commandFactory: CommandFactoryFn,
     onMessage: ConsumerFn = defOnMessage
 ): Command {
     const consumeCommand = commandFactory("consume");

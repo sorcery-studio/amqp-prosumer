@@ -1,33 +1,45 @@
-import {createCommand, program, Command} from "commander"
+import {createCommand} from "commander";
 import {createAndRun} from "./app";
-import {ICommandFactory} from "./commands/common";
+import {CommandFactoryFn} from "./commands/common";
 
-const spyVersion = jest.spyOn(program, "version");
-const spyCommand = jest.spyOn(program, "addCommand");
-const spyParseAsync = jest.spyOn(program, "parseAsync").mockImplementation(async () => { return {} as Command });
+jest.mock("commander");
+
+const mockCommand = {
+    version: jest.fn(),
+    command: jest.fn(),
+    parseAsync: jest.fn(() => new Promise((resolve) => { resolve() })),
+    option: jest.fn(),
+    action: jest.fn(),
+    addCommand: jest.fn()
+};
+
+(<jest.Mock>createCommand).mockImplementation(() => {
+    return mockCommand;
+});
 
 beforeEach(() => {
-    jest.resetAllMocks();
-    createAndRun(APP_VERSION, createCommand as ICommandFactory);
+    jest.clearAllMocks();
+    createAndRun(APP_VERSION, createCommand as CommandFactoryFn);
 });
 
 const APP_VERSION = "1.0.0";
 
 describe("AMQP ProSumer", () => {
 
+    test("it creates the command", () => {
+        expect(createCommand).toBeCalledWith();
+    })
+
     test("it sets the 'version' information for the command", () => {
-        expect(spyVersion).toBeCalledWith(APP_VERSION);
+        expect(mockCommand.version).toBeCalledWith(APP_VERSION);
     });
 
-    test("it defines the 'consume' command", () => {
-        expect(spyCommand).toBeCalledWith("consume", "Runs a AMQP consumer process");
-    });
-
-    test("it defines the 'produce' command", () => {
-        expect(spyCommand).toBeCalledWith("produce", "Runs a AMQP producer process");
+    test("it defines the 'consume' and 'produce' commands", () => {
+        // ToDo: Be more specific
+        expect(mockCommand.addCommand).toBeCalledTimes(2);
     });
 
     test("it parses the command line arguments", () => {
-        expect(spyParseAsync).toBeCalled();
+        expect(mockCommand.parseAsync).toBeCalledTimes(1);
     });
 });
