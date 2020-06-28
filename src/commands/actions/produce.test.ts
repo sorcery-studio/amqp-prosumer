@@ -2,14 +2,15 @@ import {actionProduce, InputProvider, ProduceOptions} from "./produce";
 
 const fnTestInput: InputProvider = async (onMessage) => {
     [
-        "mesageA",
+        "messageA",
         "messageB"
     ].forEach((msg) => onMessage(msg));
 }
-describe("Produce Action", () =>{
+
+describe("Produce Action", () => {
 
     test("it's able to send a message to a queue", async () => {
-        const target: ProduceOptions = {
+        const opts: ProduceOptions = {
             host: {
                 url: "amqp://localhost"
             },
@@ -19,7 +20,7 @@ describe("Produce Action", () =>{
         };
 
         const result = await actionProduce(
-            target,
+            opts,
             fnTestInput
         );
 
@@ -27,7 +28,7 @@ describe("Produce Action", () =>{
     });
 
     test("it's able to send a message to an exchange", async () => {
-        const target: ProduceOptions = {
+        const opts: ProduceOptions = {
             host: {
                 url: "amqp://localhost"
             },
@@ -37,7 +38,7 @@ describe("Produce Action", () =>{
         };
 
         const result = await actionProduce(
-            target,
+            opts,
             fnTestInput
         );
 

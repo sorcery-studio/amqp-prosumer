@@ -1,6 +1,7 @@
 import * as amqplib from "amqplib";
-import {Channel} from "amqplib";
+import {Channel, Connection} from "amqplib";
 import fs from "fs";
+import {Command} from "commander";
 import {debug, Debugger} from "debug";
 
 export type OnMessageFn = (message: string) => Promise<boolean>;
@@ -51,7 +52,7 @@ async function publishToExchange(channel: Channel, exchange: string, message: st
     );
 }
 
-async function readAndSendToQueue(channel: Channel, queue: string, message: string) {
+async function sendToQueue(channel: Channel, queue: string, message: string) {
     return channel.sendToQueue(
         queue,
         Buffer.from(JSON.stringify(message))
@@ -64,38 +65,17 @@ function delay(ms: number): Promise<void> {
     });
 }
 
-export async function actionProduce(
-    target: ProduceOptions,
-    fnReadInput: InputProvider = readInput,
-    log: Debugger = logger
-): Promise<boolean> {
-    log("Staring the producer process");
-
-    if (!target.exchange?.name && !target.queue?.name) {
-        throw new Error("Either exchange or queue have to be specified");
-    }
-
-    const connection = await amqplib.connect(target.host.url);
-    log("Connection to %s established", target.host.url);
+async function connectToBroker(options: ProduceOptions, log: debug.Debugger) {
+    const connection = await amqplib.connect(options.host.url);
+    log("Connection to %s established", options.host.url);
 
     const channel = await connection.createChannel();
     log("Channel created");
 
-    if (target.exchange?.name) {
-        const ex = await channel.assertExchange(target.exchange.name, "topic");
-        log("Target exchange %s asserted", ex.exchange);
+    return {connection, channel};
+}
 
-        await fnReadInput((message: string) => publishToExchange(channel, ex.exchange, message));
-
-    } else if (target.queue?.name) {
-        const q = await channel.assertQueue(target.queue.name, {durable: false, autoDelete: true});
-        log("Target queue %s asserted", q.queue);
-
-        await fnReadInput((message: string) => readAndSendToQueue(channel, q.queue, message));
-    } else {
-        throw new Error("Oh, really?");
-    }
-
+async function disconnectFromBroker(connection: Connection, log: debug.Debugger) {
     // Important! We shouldn't close the connection - `amqplib` buffers "pending" messages
     // and closing the connection too early leads to rejections
     await delay(2000);
@@ -103,6 +83,70 @@ export async function actionProduce(
     log("Shutting down the producer");
     await connection.close();
     log("Shutdown completed");
+}
+
+async function readAndSendToExchange(channel: Channel, options: ExchangeOption, log: debug.Debugger, fnReadInput: InputProvider) {
+    const ex = await channel.assertExchange(options.name, "topic");
+    log("Target exchange %s asserted", ex.exchange);
+
+    await fnReadInput((message: string) => publishToExchange(channel, ex.exchange, message));
+}
+
+async function readAndSendToQueue(channel: Channel, options: QueueOption, log: debug.Debugger, fnReadInput: InputProvider) {
+    const q = await channel.assertQueue(options.name, {durable: false, autoDelete: true});
+    log("Target queue %s asserted", q.queue);
+
+    await fnReadInput((message: string) => sendToQueue(channel, q.queue, message));
+}
+
+export async function actionProduce(
+    options: ProduceOptions,
+    fnReadInput: InputProvider = readInput,
+    log: Debugger = logger
+): Promise<boolean> {
+    log("Staring the producer action");
+
+    const {connection, channel} = await connectToBroker(options, log);
+
+    if (options.exchange?.name) {
+        await readAndSendToExchange(channel, options.exchange, log, fnReadInput);
+    } else if (options.queue?.name) {
+        await readAndSendToQueue(channel, options.queue, log, fnReadInput);
+    }
+
+    await disconnectFromBroker(connection, log);
+    log("Produce action executed successfully");
 
     return true;
+}
+
+/**
+ * Helper function preparing the options for the produce action
+ *
+ * @param cmd The original command
+ */
+export function commandToOptions(cmd: Command): ProduceOptions {
+    if (!cmd.exchange && !cmd.queue) {
+        throw new Error("Either exchange or queue have to be specified");
+    }
+
+    const opts: ProduceOptions = {
+        host: {
+            url: cmd.host
+        }
+    };
+
+    if (cmd.exchange) {
+        opts.exchange = {
+            name: cmd.exchange
+        };
+    }
+
+    if (cmd.queue) {
+        opts.queue = {
+            name: cmd.queue
+        }
+    }
+
+    return opts;
 }

@@ -1,6 +1,6 @@
 import {Command} from "commander";
 import {CommandFactoryFn} from "./common";
-import {actionProduce} from "./actions/produce";
+import {actionProduce, commandToOptions} from "./actions/produce";
 
 export function buildProduceCommand(createCommand: CommandFactoryFn): Command {
     const produceCommand = createCommand("produce");
@@ -10,7 +10,7 @@ export function buildProduceCommand(createCommand: CommandFactoryFn): Command {
     produceCommand.option("-q, --queue [name]", "The name of the queue to publish to");
 
     produceCommand.action((cmd: Command) => {
-        actionProduce(cmd.host, cmd.queue, cmd.exchange)
+        actionProduce(commandToOptions(cmd))
             .catch((err) => console.error("Command execution failure", err));
     });
 
