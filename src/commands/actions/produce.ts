@@ -6,6 +6,24 @@ import {debug, Debugger} from "debug";
 export type OnMessageFn = (message: string) => Promise<boolean>;
 export type InputProvider = (onMessage: OnMessageFn) => Promise<void>;
 
+interface HostOption {
+    url: string;
+}
+
+interface ExchangeOption {
+    name: string;
+}
+
+interface QueueOption {
+    name: string;
+}
+
+export interface ProduceOptions {
+    host: HostOption,
+    exchange?: ExchangeOption,
+    queue?: QueueOption
+}
+
 const logger = debug("amqp-prosumer:producer");
 
 async function readInput(onMessage: OnMessageFn, log: Debugger = logger) {
@@ -47,32 +65,30 @@ function delay(ms: number): Promise<void> {
 }
 
 export async function actionProduce(
-    hostName: string,
-    exchangeName?: string,
-    queueName?: string,
+    target: ProduceOptions,
     fnReadInput: InputProvider = readInput,
     log: Debugger = logger
 ): Promise<boolean> {
     log("Staring the producer process");
 
-    if (!exchangeName && !queueName) {
+    if (!target.exchange?.name && !target.queue?.name) {
         throw new Error("Either exchange or queue have to be specified");
     }
 
-    const connection = await amqplib.connect(hostName);
-    log("Connection to %s established", hostName);
+    const connection = await amqplib.connect(target.host.url);
+    log("Connection to %s established", target.host.url);
 
     const channel = await connection.createChannel();
     log("Channel created");
 
-    if (exchangeName) {
-        const ex = await channel.assertExchange(exchangeName, "topic");
+    if (target.exchange?.name) {
+        const ex = await channel.assertExchange(target.exchange.name, "topic");
         log("Target exchange %s asserted", ex.exchange);
 
         await fnReadInput((message: string) => publishToExchange(channel, ex.exchange, message));
 
-    } else if (queueName) {
-        const q = await channel.assertQueue(queueName, {durable: false, autoDelete: true});
+    } else if (target.queue?.name) {
+        const q = await channel.assertQueue(target.queue.name, {durable: false, autoDelete: true});
         log("Target queue %s asserted", q.queue);
 
         await fnReadInput((message: string) => readAndSendToQueue(channel, q.queue, message));
