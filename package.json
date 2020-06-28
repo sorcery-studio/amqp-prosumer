@@ -19,8 +19,10 @@
   "scripts": {
     "prebuild": "rimraf dist/",
     "build": "tsc --project tsconfig.json && cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
-    "pretest": "npm run build",
-    "test": "jest dist/"
+    "pretest": "rimraf dist/",
+    "test": "jest src/",
+    "pretest:build": "npm run build",
+    "test:build": "cd dist/ && jest src/"
   },
   "author": "Grzegorz Godlewski <ggodlewski@sorcerystudio.com>",
   "license": "MIT",

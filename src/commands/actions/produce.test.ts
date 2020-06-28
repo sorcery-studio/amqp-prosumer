@@ -1,4 +1,5 @@
-import {actionProduce, InputProvider, ProduceOptions} from "./produce";
+import {Command} from "commander";
+import {actionProduce, commandToOptions, InputProvider, ProduceOptions} from "./produce";
 
 const fnTestInput: InputProvider = async (onMessage) => {
     [
@@ -44,4 +45,30 @@ describe("Produce Action", () => {
 
         expect(result).toEqual(true);
     });
+
+    describe("Command to Options", () => {
+        test("it handles the host, queue and exchange command parameters", () => {
+            const cmd = {
+                host: "amqp://example",
+                queue: "example-queue",
+                exchange: "example-exchange"
+            } as unknown as Command;
+
+            const opts = commandToOptions(cmd);
+
+            expect(opts.host.url).toEqual(cmd.host);
+            expect(opts.exchange?.name).toEqual(cmd.exchange);
+            expect(opts.queue?.name).toEqual(cmd.queue);
+        });
+
+        test("it throws an error if the user does not specify queue or exchange", () => {
+            expect(() => {
+                const cmd = {
+                    host: "amqp://example"
+                } as unknown as Command;
+
+                commandToOptions(cmd);
+            }).toThrow("Either exchange or queue have to be specified");
+        });
+    })
 });
