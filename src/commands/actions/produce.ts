@@ -1,8 +1,8 @@
-import * as amqplib from "amqplib";
-import { Channel, Connection } from "amqplib";
+import { Channel } from "amqplib";
 import fs from "fs";
 import { Command } from "commander";
 import { debug, Debugger } from "debug";
+import { connectToBroker, disconnectFromBroker } from "./broker";
 
 export type OnMessageFn = (message: string) => Promise<boolean>;
 export type InputProvider = (onMessage: OnMessageFn) => Promise<void>;
@@ -61,38 +61,6 @@ async function sendToQueue(
   message: string
 ): Promise<boolean> {
   return channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), ms);
-  });
-}
-
-async function connectToBroker(
-  options: ProduceOptions,
-  log: debug.Debugger
-): Promise<{ connection: Connection; channel: Channel }> {
-  const connection = await amqplib.connect(options.host.url);
-  log("Connection to %s established", options.host.url);
-
-  const channel = await connection.createChannel();
-  log("Channel created");
-
-  return { connection, channel };
-}
-
-async function disconnectFromBroker(
-  connection: Connection,
-  log: debug.Debugger
-): Promise<void> {
-  // Important! We shouldn't close the connection - `amqplib` buffers "pending" messages
-  // and closing the connection too early leads to rejections
-  await delay(2000);
-
-  log("Shutting down the producer");
-  await connection.close();
-  log("Shutdown completed");
 }
 
 async function readAndSendToExchange(
