@@ -21,6 +21,7 @@
     "build": "tsc --project tsconfig.json && cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "rimraf dist/",
     "test": "jest src/",
+    "test:coverage": "jest src/ --collectCoverage --collectCoverageFrom='src/**/*.ts'",
     "pretest:build": "npm run build",
     "test:build": "cd dist/ && jest src/"
   },

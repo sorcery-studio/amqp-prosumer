@@ -2,6 +2,8 @@
 
 AMQP-based Consumer/Producer tool
 
+![Node.js CI](https://github.com/SorceryStudio/amqp-prosumer/workflows/Node.js%20CI/badge.svg)
+
 ## Usage
 
 ### Getting started
