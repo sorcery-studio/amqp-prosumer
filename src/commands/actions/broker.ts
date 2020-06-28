@@ -1,14 +1,13 @@
 import { Debugger } from "debug";
 import * as amqplib from "amqplib";
 import { Channel, Connection } from "amqplib";
-import { ProduceOptions } from "./produce";
 
 export async function connectToBroker(
-  options: ProduceOptions,
+  url: string,
   log: Debugger
 ): Promise<{ connection: Connection; channel: Channel }> {
-  const connection = await amqplib.connect(options.host.url);
-  log("Connection to %s established", options.host.url);
+  const connection = await amqplib.connect(url);
+  log("Connection to %s established", url);
 
   const channel = await connection.createChannel();
   log("Channel created");

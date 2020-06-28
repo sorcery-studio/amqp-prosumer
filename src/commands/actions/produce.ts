@@ -101,7 +101,7 @@ export async function actionProduce(
 ): Promise<boolean> {
   log("Staring the producer action");
 
-  const { connection, channel } = await connectToBroker(options, log);
+  const { connection, channel } = await connectToBroker(options.host.url, log);
 
   if (options.exchange?.name) {
     await readAndSendToExchange(channel, options.exchange, log, fnReadInput);
