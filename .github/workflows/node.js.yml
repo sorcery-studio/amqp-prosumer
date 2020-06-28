@@ -18,12 +18,12 @@ jobs:
       rabbitmq:
         image: rabbitmq:latest
         ports:
-          - "5672/tcp"
+          - "5672:5672"
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
 
     strategy:
       matrix:
-        node-version: [10.x]
+        node-version: [10.x, 12.x, 14.x]
 
     steps:
     - uses: actions/checkout@v2
