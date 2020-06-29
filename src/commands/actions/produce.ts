@@ -33,6 +33,10 @@ async function readInput(
 ): Promise<void> {
   log("Reading input");
 
+  if (process.stdin.isTTY) {
+    throw new Error("No input provided over STDIN");
+  }
+
   const messagesToSend = fs
     .readFileSync(0, "utf-8")
     .split("\n")

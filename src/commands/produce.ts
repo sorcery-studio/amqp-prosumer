@@ -1,29 +1,28 @@
 import { Command } from "commander";
-import { CommandFactoryFn } from "./common";
+import { CommandFactoryFn, reportErrorAndExit } from "./common";
 import { actionProduce, commandToOptions } from "./actions/produce";
 
 export function buildProduceCommand(createCommand: CommandFactoryFn): Command {
   const produceCommand = createCommand("produce");
 
   produceCommand.option(
-    "-h, --host [url]",
+    "-h, --host <url>",
     "The URL to the RabbitMQ instance",
     "amqp://localhost"
   );
+
   produceCommand.option(
-    "-e, --exchange [name]",
+    "-e, --exchange <name>",
     "The name of exchange to publish to"
   );
+
   produceCommand.option(
-    "-q, --queue [name]",
+    "-q, --queue <name>",
     "The name of the queue to publish to"
   );
 
   produceCommand.action((cmd: Command) => {
-    actionProduce(commandToOptions(cmd)).catch((err) =>
-      // eslint-disable-next-line no-console
-      console.error("Command execution failure", err)
-    );
+    actionProduce(commandToOptions(cmd)).catch(reportErrorAndExit);
   });
 
   return produceCommand;
