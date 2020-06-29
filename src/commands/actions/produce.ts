@@ -33,16 +33,18 @@ async function readInput(
 ): Promise<void> {
   log("Reading input");
 
-  fs.readFileSync(0, "utf-8")
+  const messagesToSend = fs
+    .readFileSync(0, "utf-8")
     .split("\n")
-    .filter((message) => message !== "")
-    .forEach((message: string) => {
-      log("Publishing message '%s'", message);
-      const success = onMessage(message);
-      if (!success) {
-        log("ERROR: The message was not published");
-      }
-    });
+    .filter((message) => message !== "");
+
+  for (const message of messagesToSend) {
+    log("Publishing message '%s'", message);
+    const success = await onMessage(message);
+    if (!success) {
+      log("ERROR: The message was not published");
+    }
+  }
 
   log("Finished reading input");
 }
@@ -54,6 +56,13 @@ async function publishToExchange(
 ): Promise<boolean> {
   return channel.publish(exchange, "", Buffer.from(JSON.stringify(message)));
 }
+
+const waitForDrain = async (channel: Channel): Promise<void> =>
+  new Promise((resolve) => {
+    channel.once("drain", () => {
+      resolve();
+    });
+  });
 
 async function sendToQueue(
   channel: Channel,
@@ -72,9 +81,27 @@ async function readAndSendToExchange(
   const ex = await channel.assertExchange(options.name, "topic");
   log("Target exchange %s asserted", ex.exchange);
 
-  await fnReadInput((message: string) =>
-    publishToExchange(channel, ex.exchange, message)
-  );
+  let failedMessageCount = 0;
+  await fnReadInput(async (message: string) => {
+    const accepted = await publishToExchange(channel, ex.exchange, message);
+    if (!accepted) {
+      await waitForDrain(channel);
+
+      const retryAccepted = await publishToExchange(
+        channel,
+        ex.exchange,
+        message
+      );
+
+      if (!retryAccepted) {
+        log("ERROR: The message was not accepted", ++failedMessageCount);
+      }
+
+      return retryAccepted;
+    }
+
+    return accepted;
+  });
 }
 
 async function readAndSendToQueue(
@@ -89,9 +116,24 @@ async function readAndSendToQueue(
   });
   log("Target queue %s asserted", q.queue);
 
-  await fnReadInput((message: string) =>
-    sendToQueue(channel, q.queue, message)
-  );
+  let failedMessageCount = 0;
+  await fnReadInput(async (message: string) => {
+    const accepted = await sendToQueue(channel, q.queue, message);
+
+    if (!accepted) {
+      await waitForDrain(channel);
+
+      const retryAccepted = await sendToQueue(channel, q.queue, message);
+
+      if (!retryAccepted) {
+        log("ERROR: The message was not accepted", ++failedMessageCount);
+      }
+
+      return retryAccepted;
+    }
+
+    return accepted;
+  });
 }
 
 export async function actionProduce(

@@ -69,7 +69,15 @@ export async function actionConsume(
     consumerTag
   );
 
+  let isShuttingDown = false;
   const shutdown = async (): Promise<void> => {
+    if (isShuttingDown) {
+      log("The consumer is already shutting down");
+      return;
+    }
+
+    isShuttingDown = true;
+
     log("Shutting down the consumer");
     await channel.cancel(consumerTag);
     // ToDo: clean exchange and queue?

@@ -12,6 +12,34 @@ export async function connectToBroker(
   const channel = await connection.createChannel();
   log("Channel created");
 
+  channel.on("close", (serverError?) => {
+    log("Channel#close()");
+
+    if (serverError) {
+      log("Server Error Received", serverError);
+    }
+  });
+
+  channel.on("error", (err) => {
+    log("Channel#error()", err);
+  });
+
+  channel.on("return", (msg) => {
+    log("Channel#return()", msg);
+  });
+
+  channel.on("drain", () => {
+    log("Channel#drain()");
+  });
+
+  channel.on("blocked", (reason) => {
+    log("Channel#blocked()", reason);
+  });
+
+  channel.on("unblocked", (reason) => {
+    log("Channel#blocked()", reason);
+  });
+
   return { connection, channel };
 }
 
@@ -29,7 +57,7 @@ export async function disconnectFromBroker(
   // and closing the connection too early leads to rejections
   await delay(2000);
 
-  log("Shutting down the producer");
+  log("Shutting down the connection");
   await connection.close();
   log("Shutdown completed");
 }
