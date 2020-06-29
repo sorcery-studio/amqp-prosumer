@@ -1,11 +1,15 @@
 # Changelog
 
-## [Unreleased] - YYYY-MM-DD
+## [0.2.3] - 2020-06-29
 
 ### Changed
 
 * The values of `host`, `exchange` and `queue` are now required if the options were provided. Previously it was possible to run the command with for example `-h` and not providing the URL - which led to errors. 
 * Unified the closing behaviour of `produce` and `consume` commands - they report the error in the same way and shut down the process with exit code `1`.
+
+### Fixed
+
+* Fixed the issue caused by prettier removing the shebang line, effectively breaking the executable.
 
 ## [0.2.2] - 2020-06-29
 
