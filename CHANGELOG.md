@@ -1,9 +1,14 @@
 # Changelog
 
+## [0.2.1] - 2020-06-29
+
+### Fixed
+
+* Fixed the issue which resulted in not all messages being sent out to the broker by the `produce` command
+
 ## [0.2.0] - 2020-06-26
 
 ### Added
-
 
 * Provided `LICENSE.md` file.
 * Provided `CHANGELOG.md` file.
