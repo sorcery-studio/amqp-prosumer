@@ -1,6 +1,8 @@
 # Changelog
 
-## [0.2.1] - 2020-06-29
+## [0.2.2] - 2020-06-29
+
+Note: 0.2.1 was wrongly released and is replaced by 0.0.2
 
 ### Fixed
 
