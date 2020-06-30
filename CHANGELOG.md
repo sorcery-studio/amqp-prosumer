@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.4] - 2020-06-30
+
+### Fixed
+
+* Fixed the issue which resulted in duplicating messages during "flow control" state.
+
+### Changed
+
+* The messages taken from the input are now sent in an unmodified form (previously they were JSON-encoded before being sent).
+* The consumer function does no longer trim `"` from the start and end of the received message.
+
 ## [0.2.3] - 2020-06-29
 
 ### Changed

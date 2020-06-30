@@ -58,7 +58,7 @@ async function publishToExchange(
   exchange: string,
   message: string
 ): Promise<boolean> {
-  return channel.publish(exchange, "", Buffer.from(JSON.stringify(message)));
+  return channel.publish(exchange, "", Buffer.from(message));
 }
 
 const waitForDrain = async (channel: Channel): Promise<void> =>
@@ -73,7 +73,7 @@ async function sendToQueue(
   queue: string,
   message: string
 ): Promise<boolean> {
-  return channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
+  return channel.sendToQueue(queue, Buffer.from(message));
 }
 
 async function readAndSendToExchange(
@@ -85,23 +85,10 @@ async function readAndSendToExchange(
   const ex = await channel.assertExchange(options.name, "topic");
   log("Target exchange %s asserted", ex.exchange);
 
-  let failedMessageCount = 0;
   await fnReadInput(async (message: string) => {
     const accepted = await publishToExchange(channel, ex.exchange, message);
     if (!accepted) {
       await waitForDrain(channel);
-
-      const retryAccepted = await publishToExchange(
-        channel,
-        ex.exchange,
-        message
-      );
-
-      if (!retryAccepted) {
-        log("ERROR: The message was not accepted", ++failedMessageCount);
-      }
-
-      return retryAccepted;
     }
 
     return accepted;
@@ -120,20 +107,10 @@ async function readAndSendToQueue(
   });
   log("Target queue %s asserted", q.queue);
 
-  let failedMessageCount = 0;
   await fnReadInput(async (message: string) => {
     const accepted = await sendToQueue(channel, q.queue, message);
-
     if (!accepted) {
       await waitForDrain(channel);
-
-      const retryAccepted = await sendToQueue(channel, q.queue, message);
-
-      if (!retryAccepted) {
-        log("ERROR: The message was not accepted", ++failedMessageCount);
-      }
-
-      return retryAccepted;
     }
 
     return accepted;

@@ -9,12 +9,8 @@ type ConsumerFn = (msg: ConsumeMessage) => void;
 const log = debug("amqp-prosumer:consumer");
 
 export const defOnMessage: ConsumerFn = (msg) => {
-  log("Consuming message");
-
-  const write = msg.content
-    .toString("utf-8")
-    .replace(/^"/, "")
-    .replace(/"$/, "");
+  const write = msg.content.toString("utf-8");
+  log("Consuming message", write);
 
   fs.writeFileSync(1, write + "\n");
 };

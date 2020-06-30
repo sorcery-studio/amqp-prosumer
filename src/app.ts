@@ -1,6 +1,6 @@
 import { buildConsumeCommand } from "./commands/consume";
 import { buildProduceCommand } from "./commands/produce";
-import { CommandFactoryFn } from "./commands/common";
+import { CommandFactoryFn, reportErrorAndExit } from "./commands/common";
 
 export function createAndRun(
   version: string,
@@ -13,9 +13,5 @@ export function createAndRun(
   program.addCommand(buildConsumeCommand(createCommand));
   program.addCommand(buildProduceCommand(createCommand));
 
-  program.parseAsync(process.argv).catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error(`ERROR: ${err.message}`);
-    process.exit(1);
-  });
+  program.parseAsync(process.argv).catch(reportErrorAndExit);
 }
