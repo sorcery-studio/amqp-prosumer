@@ -132,7 +132,7 @@ export async function actionProduce(
     await readAndSendToQueue(channel, options.queue, log, fnReadInput);
   }
 
-  await disconnectFromBroker(connection, log);
+  await disconnectFromBroker({ connection, channel }, log);
   log("Produce action executed successfully");
 
   return true;

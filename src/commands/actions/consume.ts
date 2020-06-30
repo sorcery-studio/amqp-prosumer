@@ -76,8 +76,7 @@ export async function actionConsume(
 
     log("Shutting down the consumer");
     await channel.cancel(consumerTag);
-    // ToDo: clean exchange and queue?
-    await disconnectFromBroker(connection, log);
+    await disconnectFromBroker({ connection, channel }, log);
     log("Shutdown completed");
   };
 

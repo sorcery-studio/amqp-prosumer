@@ -1,5 +1,8 @@
+jest.mock("amqplib");
+
 import { Command } from "commander";
-import { commandToOptions } from "./produce";
+import { actionProduce, commandToOptions, InputProvider } from "./produce";
+import * as amqplib from "amqplib";
 
 describe("Produce Action Unit Tests", () => {
   describe("Command to Options", () => {
@@ -25,6 +28,33 @@ describe("Produce Action Unit Tests", () => {
 
         commandToOptions(cmd);
       }).toThrow("Either exchange or queue have to be specified");
+    });
+  });
+
+  describe("Action", () => {
+    const fnTestInput: InputProvider = async (onMessage) => {
+      const messages = ["messageA", "messageB"];
+
+      for (const msg of messages) {
+        await onMessage(msg);
+      }
+    };
+
+    test("it closes the channel when disconnecting", async () => {
+      const result = await actionProduce(
+        {
+          host: {
+            url: "amqp://example",
+          },
+          exchange: { name: "ExampleExchange" },
+        },
+        fnTestInput
+      );
+
+      expect(result).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      expect(amqplib.channel.close).toBeCalled();
     });
   });
 });

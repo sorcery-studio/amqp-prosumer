@@ -2,10 +2,15 @@ import { Debugger } from "debug";
 import * as amqplib from "amqplib";
 import { Channel, Connection } from "amqplib";
 
+interface BrokerConnection {
+  connection: Connection;
+  channel: Channel;
+}
+
 export async function connectToBroker(
   url: string,
   log: Debugger
-): Promise<{ connection: Connection; channel: Channel }> {
+): Promise<BrokerConnection> {
   const connection = await amqplib.connect(url);
   log("Connection to %s established", url);
 
@@ -43,21 +48,15 @@ export async function connectToBroker(
   return { connection, channel };
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), ms);
-  });
-}
-
 export async function disconnectFromBroker(
-  connection: Connection,
+  broker: BrokerConnection,
   log: Debugger
 ): Promise<void> {
-  // Important! We shouldn't close the connection - `amqplib` buffers "pending" messages
-  // and closing the connection too early leads to rejections
-  await delay(2000);
+  log("Closing channel");
+  await broker.channel.close();
+  log("Channel closed");
 
   log("Shutting down the connection");
-  await connection.close();
+  await broker.connection.close();
   log("Shutdown completed");
 }

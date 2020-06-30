@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - YYYY-MM-DD
+
+### Changed
+
+* The `produce` command no longer waits 2 seconds before exit.
+
 ## [0.2.4] - 2020-06-30
 
 ### Fixed
