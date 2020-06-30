@@ -1,46 +1,7 @@
 import { Command } from "commander";
-import {
-  actionProduce,
-  commandToOptions,
-  InputProvider,
-  ProduceOptions,
-} from "./produce";
+import { commandToOptions } from "./produce";
 
-const fnTestInput: InputProvider = async (onMessage) => {
-  ["messageA", "messageB"].forEach((msg) => onMessage(msg));
-};
-
-describe("Produce Action", () => {
-  test("it's able to send a message to a queue", async () => {
-    const opts: ProduceOptions = {
-      host: {
-        url: "amqp://localhost",
-      },
-      queue: {
-        name: "example-queue",
-      },
-    };
-
-    const result = await actionProduce(opts, fnTestInput);
-
-    expect(result).toEqual(true);
-  });
-
-  test("it's able to send a message to an exchange", async () => {
-    const opts: ProduceOptions = {
-      host: {
-        url: "amqp://localhost",
-      },
-      exchange: {
-        name: "ExampleExchange",
-      },
-    };
-
-    const result = await actionProduce(opts, fnTestInput);
-
-    expect(result).toEqual(true);
-  });
-
+describe("Produce Action Unit Tests", () => {
   describe("Command to Options", () => {
     test("it handles the host, queue and exchange command parameters", () => {
       const cmd = ({
