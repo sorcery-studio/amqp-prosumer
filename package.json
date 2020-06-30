@@ -1,6 +1,6 @@
 {
   "name": "amqp-prosumer",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "AMQP-based Consumer/Producer tool",
   "repository": {
     "type": "git",
