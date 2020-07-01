@@ -12,6 +12,7 @@ export const channel = {
   assertExchange: jest.fn(() => exchange),
   assertQueue: jest.fn(() => queue),
   publish: jest.fn(() => true),
+  sendToQueue: jest.fn(() => true),
   close: jest.fn(),
 };
 

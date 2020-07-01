@@ -86,12 +86,12 @@ async function readAndSendToExchange(
   log("Target exchange %s asserted", ex.exchange);
 
   await fnReadInput(async (message: string) => {
-    const accepted = await publishToExchange(channel, ex.exchange, message);
-    if (!accepted) {
+    const keepSending = await publishToExchange(channel, ex.exchange, message);
+    if (!keepSending) {
       await waitForDrain(channel);
     }
 
-    return accepted;
+    return keepSending;
   });
 }
 
@@ -108,12 +108,12 @@ async function readAndSendToQueue(
   log("Target queue %s asserted", q.queue);
 
   await fnReadInput(async (message: string) => {
-    const accepted = await sendToQueue(channel, q.queue, message);
-    if (!accepted) {
+    const keepSending = await sendToQueue(channel, q.queue, message);
+    if (!keepSending) {
       await waitForDrain(channel);
     }
 
-    return accepted;
+    return keepSending;
   });
 }
 
