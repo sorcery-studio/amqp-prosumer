@@ -13,9 +13,9 @@ describe("Produce Command", () => {
     expect(cmd).toBeInstanceOf(Command);
   });
 
-  test("it defines the 'host' option, default 'amqp://localhost'", () => {
-    expect(Object.keys(cmd.opts())).toContain("host");
-    expect(cmd.host).toEqual("amqp://localhost");
+  test("it defines the 'uri' option, default 'amqp://localhost'", () => {
+    expect(Object.keys(cmd.opts())).toContain("uri");
+    expect(cmd.uri).toEqual("amqp://localhost");
   });
 
   test("it defines the 'queue' option", () => {

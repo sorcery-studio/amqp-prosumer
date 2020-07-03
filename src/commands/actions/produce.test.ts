@@ -6,16 +6,16 @@ import * as amqplib from "amqplib";
 
 describe("Produce Action Unit Tests", () => {
   describe("Command to Options", () => {
-    test("it handles the host, queue and exchange command parameters", () => {
+    test("it handles the uri, queue and exchange command parameters", () => {
       const cmd = ({
-        host: "amqp://example",
+        uri: "amqp://example",
         queue: "example-queue",
         exchange: "example-exchange",
       } as unknown) as Command;
 
       const opts = commandToOptions(cmd);
 
-      expect(opts.host.url).toEqual(cmd.host);
+      expect(opts.server.uri).toEqual(cmd.uri);
       expect(opts.exchange?.name).toEqual(cmd.exchange);
       expect(opts.queue?.name).toEqual(cmd.queue);
     });
@@ -23,7 +23,7 @@ describe("Produce Action Unit Tests", () => {
     test("it throws an error if the user does not specify queue or exchange", () => {
       expect(() => {
         const cmd = ({
-          host: "amqp://example",
+          uri: "amqp://example",
         } as unknown) as Command;
 
         commandToOptions(cmd);
@@ -43,8 +43,8 @@ describe("Produce Action Unit Tests", () => {
     test("it closes the channel when disconnecting", async () => {
       const result = await actionProduce(
         {
-          host: {
-            url: "amqp://example",
+          server: {
+            uri: "amqp://example",
           },
           exchange: { name: "ExampleExchange" },
         },

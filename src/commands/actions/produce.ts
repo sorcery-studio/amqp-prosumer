@@ -7,8 +7,8 @@ import { connectToBroker, disconnectFromBroker } from "./broker";
 export type OnMessageFn = (message: string) => Promise<boolean>;
 export type InputProvider = (onMessage: OnMessageFn) => Promise<void>;
 
-interface HostOption {
-  url: string;
+interface ServerOption {
+  uri: string;
 }
 
 interface ExchangeOption {
@@ -20,7 +20,7 @@ interface QueueOption {
 }
 
 export interface ProduceOptions {
-  host: HostOption;
+  server: ServerOption;
   exchange?: ExchangeOption;
   queue?: QueueOption;
 }
@@ -124,7 +124,10 @@ export async function actionProduce(
 ): Promise<boolean> {
   log("Staring the producer action");
 
-  const { connection, channel } = await connectToBroker(options.host.url, log);
+  const { connection, channel } = await connectToBroker(
+    options.server.uri,
+    log
+  );
 
   if (options.exchange?.name) {
     await readAndSendToExchange(channel, options.exchange, log, fnReadInput);
@@ -141,28 +144,28 @@ export async function actionProduce(
 /**
  * Helper function preparing the options for the produce action
  *
- * @param cmd The original command
+ * @param command The original command
  */
-export function commandToOptions(cmd: Command): ProduceOptions {
-  if (!cmd.exchange && !cmd.queue) {
+export function commandToOptions(command: Command): ProduceOptions {
+  if (!command.exchange && !command.queue) {
     throw new Error("Either exchange or queue have to be specified");
   }
 
   const opts: ProduceOptions = {
-    host: {
-      url: cmd.host,
+    server: {
+      uri: command.uri,
     },
   };
 
-  if (cmd.exchange) {
+  if (command.exchange) {
     opts.exchange = {
-      name: cmd.exchange,
+      name: command.exchange,
     };
   }
 
-  if (cmd.queue) {
+  if (command.queue) {
     opts.queue = {
-      name: cmd.queue,
+      name: command.queue,
     };
   }
 

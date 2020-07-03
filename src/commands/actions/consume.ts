@@ -25,7 +25,7 @@ export async function actionConsume(
     throw new Error("Either exchange or queue have to be specified");
   }
 
-  const { connection, channel } = await connectToBroker(command.host, log);
+  const { connection, channel } = await connectToBroker(command.uri, log);
 
   let exchange;
   let queue;

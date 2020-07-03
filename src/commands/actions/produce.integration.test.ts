@@ -7,8 +7,8 @@ const fnTestInput: InputProvider = async (onMessage) => {
 describe("Produce Action Integration Tests", () => {
   test("it's able to send a message to a queue", async () => {
     const opts: ProduceOptions = {
-      host: {
-        url: "amqp://localhost",
+      server: {
+        uri: "amqp://localhost",
       },
       queue: {
         name: "example-queue",
@@ -22,8 +22,8 @@ describe("Produce Action Integration Tests", () => {
 
   test("it's able to send a message to an exchange", async () => {
     const opts: ProduceOptions = {
-      host: {
-        url: "amqp://localhost",
+      server: {
+        uri: "amqp://localhost",
       },
       exchange: {
         name: "ExampleExchange",

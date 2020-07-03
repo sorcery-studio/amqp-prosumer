@@ -6,7 +6,7 @@ export function buildProduceCommand(createCommand: CommandFactoryFn): Command {
   const produceCommand = createCommand("produce");
 
   produceCommand.option(
-    "-h, --host <url>",
+    "-u, --uri <uri>",
     "The URL to the RabbitMQ instance",
     "amqp://localhost"
   );

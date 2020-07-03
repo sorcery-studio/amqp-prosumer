@@ -6,7 +6,7 @@ export function buildConsumeCommand(commandFactory: CommandFactoryFn): Command {
   const consumeCommand = commandFactory("consume");
 
   consumeCommand.option(
-    "-h, --host <url>",
+    "-u, --uri <uri>",
     "The URL to the RabbitMQ instance",
     "amqp://localhost"
   );
