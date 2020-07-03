@@ -25,7 +25,7 @@ export async function actionConsume(
     throw new Error("Either exchange or queue have to be specified");
   }
 
-  const { connection, channel } = await connectToBroker(command.uri, log);
+  const { connection, channel } = await connectToBroker(log, command.uri);
 
   let exchange;
   let queue;
@@ -76,7 +76,7 @@ export async function actionConsume(
 
     log("Shutting down the consumer");
     await channel.cancel(consumerTag);
-    await disconnectFromBroker({ connection, channel }, log);
+    await disconnectFromBroker(log, { connection, channel });
     log("Shutdown completed");
   };
 

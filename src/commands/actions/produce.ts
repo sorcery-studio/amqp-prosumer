@@ -125,8 +125,8 @@ export async function actionProduce(
   log("Staring the producer action");
 
   const { connection, channel } = await connectToBroker(
-    options.server.uri,
-    log
+    log,
+    options.server.uri
   );
 
   if (options.exchange?.name) {
@@ -135,7 +135,7 @@ export async function actionProduce(
     await readAndSendToQueue(channel, options.queue, log, fnReadInput);
   }
 
-  await disconnectFromBroker({ connection, channel }, log);
+  await disconnectFromBroker(log, { connection, channel });
   log("Produce action executed successfully");
 
   return true;

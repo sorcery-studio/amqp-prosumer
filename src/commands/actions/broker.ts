@@ -8,8 +8,8 @@ interface BrokerConnection {
 }
 
 export async function connectToBroker(
-  url: string,
-  log: Debugger
+  log: Debugger,
+  url: string
 ): Promise<BrokerConnection> {
   const connection = await amqplib.connect(url);
   log("Connection to %s established", url);
@@ -49,8 +49,8 @@ export async function connectToBroker(
 }
 
 export async function disconnectFromBroker(
-  broker: BrokerConnection,
-  log: Debugger
+  log: Debugger,
+  broker: BrokerConnection
 ): Promise<void> {
   log("Closing channel");
   await broker.channel.close();
