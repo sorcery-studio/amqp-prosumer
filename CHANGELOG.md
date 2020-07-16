@@ -2,6 +2,25 @@
 
 ## [Unreleased] - YYYY-MM-DD
 
+### `produce` command
+
+#### Changed
+
+* The `-h, --host` parameter has been replaced by `-u, --uri`.
+* The `produce` command no longer waits 2 seconds before exiting.
+
+### `consume` command
+
+#### Added
+
+* Support for the `--durable` parameter.
+* Support for the `--exclusive` parameter.
+* Support for the `--autoDelete` parameter.
+
+#### Changed
+
+* The `-h, --host` parameter has been replaced by `-u, --uri`.
+
 ## [0.3.0] - 2020-08-10
 
 ### Changed

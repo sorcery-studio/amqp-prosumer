@@ -13,8 +13,8 @@ describe("Common", () => {
 
       reportErrorAndExit(err);
 
-      expect(console.error).toBeCalledWith("ERROR:", err.message);
-      expect(process.exit).toBeCalled();
+      expect(console.error).toBeCalledWith("ERROR:", err.message, err.stack);
+      expect(process.exit).toBeCalledWith(1);
     });
   });
 });

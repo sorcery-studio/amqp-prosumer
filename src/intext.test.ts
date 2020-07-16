@@ -11,16 +11,15 @@ jest.mock("./app", () => {
 describe("Index", () => {
   test("it contains the shebang line", () => {
     // Try to get the "built JS file first
-    let script = "";
-
     if (fs.existsSync("./src/index.js")) {
-      script = fs.readFileSync("./src/index.js").toString();
+      const script = fs.readFileSync("./src/index.js").toString();
+      expect(script).toContain("#!/usr/bin/env node");
     } else {
-      script = fs.readFileSync("./src/index.ts").toString();
+      const script = fs.readFileSync("./src/produce.command.ts").toString();
+      expect(script).toContain("#!/usr/bin/env node");
     }
-
-    expect(script).toContain("#!/usr/bin/env node");
   });
+
   test("it runs the main command", () => {
     // eslint-disable-next-line node/no-missing-require
     require("./index");

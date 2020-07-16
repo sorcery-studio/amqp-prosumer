@@ -39,7 +39,6 @@ describe("AMQP ProSumer", () => {
   });
 
   test("it defines the 'consume' and 'produce' commands", () => {
-    // ToDo: Be more specific
     expect(mockCommand.addCommand).toBeCalledTimes(2);
   });
 
