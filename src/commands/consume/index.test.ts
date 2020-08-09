@@ -3,11 +3,7 @@ import { buildConsumeCommand } from "./";
 import { CommandFactoryFn } from "../common";
 
 describe("Consume Command", () => {
-  let consume: Command;
-
-  beforeEach(() => {
-    consume = buildConsumeCommand(createCommand as CommandFactoryFn);
-  });
+  const consume = buildConsumeCommand(createCommand as CommandFactoryFn);
 
   test("it returns a command object as a result", () => {
     expect(consume).toBeInstanceOf(Command);

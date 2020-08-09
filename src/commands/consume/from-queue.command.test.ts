@@ -1,12 +1,7 @@
-import { Command } from "commander";
 import { buildConsumeFromQueueCommand } from "./from-queue.command";
 
 describe("Consume From Queue Command", () => {
-  let command: Command;
-
-  beforeEach(() => {
-    command = buildConsumeFromQueueCommand();
-  });
+  const command = buildConsumeFromQueueCommand();
 
   test("it defines the 'uri' option, default 'amqp://localhost'", () => {
     expect(Object.keys(command.opts())).toContain("uri");

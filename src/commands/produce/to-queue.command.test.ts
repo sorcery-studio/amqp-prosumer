@@ -1,12 +1,7 @@
-import { Command } from "commander";
 import { buildProduceToQueueCommand } from "./to-queue.command";
 
 describe("Produce To Queue Command", () => {
-  let command: Command;
-
-  beforeEach(() => {
-    command = buildProduceToQueueCommand();
-  });
+  const command = buildProduceToQueueCommand();
 
   test("it defines the 'uri' option, default 'amqp://localhost'", () => {
     expect(Object.keys(command.opts())).toContain("uri");

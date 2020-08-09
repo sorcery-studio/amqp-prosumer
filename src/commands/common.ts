@@ -28,25 +28,16 @@ export const registerShutdownHandler: RegisterShutdownHandlerFn = (
 ) => {
   (async (): Promise<void> => {
     // Each registered handler as its own state
-    let isShuttingDown = false;
-
     const shutdown = async (): Promise<void> => {
-      if (isShuttingDown) {
-        log("The command is already shutting down");
-        return;
-      }
-
-      isShuttingDown = true;
-
       log("Running shutdown handler");
       await handler();
       log("Shutdown handler complete");
     };
 
-    process.on("disconnect", shutdown);
-    process.on("SIGINT", shutdown);
-    process.on("SIGTERM", shutdown);
-    process.on("uncaughtException", shutdown);
-    process.on("unhandledRejection", shutdown);
+    process.once("disconnect", shutdown);
+    process.once("SIGINT", shutdown);
+    process.once("SIGTERM", shutdown);
+    process.once("uncaughtException", shutdown);
+    process.once("unhandledRejection", shutdown);
   })();
 };

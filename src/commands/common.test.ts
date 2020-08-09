@@ -6,15 +6,18 @@ describe("Common", () => {
     test("it logs the error on console and exits", () => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      process.exit = jest.fn();
-      console.error = jest.fn();
+      const exitSpy = jest.spyOn(process, "exit");
+      exitSpy.mockImplementation(undefined);
+
+      const consoleSpy = jest.spyOn(console, "error");
+      consoleSpy.mockImplementation(undefined);
 
       const err = new Error("Example Error");
 
       reportErrorAndExit(err);
 
-      expect(console.error).toBeCalledWith("ERROR:", err.message, err.stack);
-      expect(process.exit).toBeCalledWith(1);
+      expect(consoleSpy).toBeCalledWith("ERROR:", err.message, err.stack);
+      expect(exitSpy).toBeCalledWith(1);
     });
   });
 });
