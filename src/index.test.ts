@@ -1,10 +1,16 @@
 import * as fs from "fs";
 
-const mockCreateAndRun = jest.fn();
+const mockParseAsync = jest.fn(() => new Promise(() => Promise.resolve()));
+
+const mockCreateApp = jest.fn(() => {
+  return {
+    parseAsync: mockParseAsync,
+  };
+});
 
 jest.mock("./app", () => {
   return {
-    createAndRun: mockCreateAndRun,
+    createApp: mockCreateApp,
   };
 });
 
@@ -23,6 +29,7 @@ describe("Index", () => {
   test("it runs the main command", () => {
     // eslint-disable-next-line node/no-missing-require
     require("./index");
-    expect(mockCreateAndRun).toBeCalled();
+    expect(mockCreateApp).toBeCalled();
+    expect(mockParseAsync).toBeCalled();
   });
 });

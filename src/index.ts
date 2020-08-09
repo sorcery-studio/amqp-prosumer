@@ -4,7 +4,9 @@
 // @ts-ignore
 import * as pkg from "../package.json";
 import { createCommand } from "commander";
-import { createAndRun } from "./app";
-import { CommandFactoryFn } from "./commands/common";
+import { createApp } from "./app";
+import { CommandFactoryFn, reportErrorAndExit } from "./commands/common";
 
-createAndRun(pkg.version, createCommand as CommandFactoryFn);
+createApp(pkg.version, createCommand as CommandFactoryFn)
+  .parseAsync(process.argv)
+  .catch(reportErrorAndExit);

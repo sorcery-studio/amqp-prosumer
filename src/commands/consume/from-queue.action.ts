@@ -37,11 +37,21 @@ async function assertQueue(
   return queue;
 }
 
+/**
+ * Starts the consumer action and returns the shutdown function
+ *
+ * @param queueName The queue which should be consumed by the action
+ * @param command Command options
+ * @param onMessage Function which will be called for each consumed message
+ * @param regShutdown Function which will be used to register the returned shutdown function
+ *
+ * @returns Shutdown function which can be used to stop the consumer manually
+ */
 export async function actionConsumeQueue(
   queueName: string,
   command: ConsumeFromQueueCommand,
   onMessage: ConsumerFn = defOnMessage,
-  onShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
+  regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   log("Staring the consumer for queue", queueName);
 
@@ -77,7 +87,7 @@ export async function actionConsumeQueue(
     log("Shutdown completed");
   };
 
-  onShutdown(shutdown);
+  regShutdown(shutdown);
 
   return shutdown;
 }

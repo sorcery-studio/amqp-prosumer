@@ -1,11 +1,12 @@
+import { Command } from "commander";
 import { buildConsumeCommand } from "./commands/consume";
 import { buildProduceCommand } from "./commands/produce";
-import { CommandFactoryFn, reportErrorAndExit } from "./commands/common";
+import { CommandFactoryFn } from "./commands/common";
 
-export function createAndRun(
+export function createApp(
   version: string,
   cmdFactory: CommandFactoryFn
-): void {
+): Command {
   const program = cmdFactory();
 
   program.version(version);
@@ -13,5 +14,5 @@ export function createAndRun(
   program.addCommand(buildConsumeCommand(cmdFactory));
   program.addCommand(buildProduceCommand(cmdFactory));
 
-  program.parseAsync(process.argv).catch(reportErrorAndExit);
+  return program;
 }
