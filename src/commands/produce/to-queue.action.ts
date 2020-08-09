@@ -3,14 +3,14 @@ import { debug, Debugger } from "debug";
 import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
 import { waitForDrain } from "./channel.utils";
 import { readInput } from "../../utils/io";
-import { InputProvider } from "./types";
+import { InputProviderFn } from "./types";
 
 const logger = debug("amqp-prosumer:producer");
 
 export async function actionProduceQueue(
   queueName: string,
   options: Command,
-  fnReadInput: InputProvider = readInput,
+  fnReadInput: InputProviderFn = readInput,
   log: Debugger = logger
 ): Promise<boolean> {
   log("Staring the producer action");
@@ -26,7 +26,7 @@ export async function actionProduceQueue(
     log("Target queue %s asserted", q.queue);
   }
 
-  await fnReadInput(async (message: string) => {
+  fnReadInput(async (message: string) => {
     const keepSending = await channel.sendToQueue(
       queueName,
       Buffer.from(message)
@@ -37,7 +37,7 @@ export async function actionProduceQueue(
     }
 
     return keepSending;
-  }, log);
+  });
 
   await disconnectFromBroker(log, { connection, channel });
   log("Produce action executed successfully");

@@ -2,8 +2,14 @@ import { Command, program } from "commander";
 import { actionProduceQueue } from "./to-queue.action";
 import { reportErrorAndExit } from "../common";
 
-export function buildProduceToQueueCommand(): Command {
-  const produce = program
+export interface ProduceToQueueCommand extends Command {
+  queueName: string;
+  assert: boolean;
+  durable: boolean;
+}
+
+export function buildProduceToQueueCommand(): ProduceToQueueCommand {
+  return program
     .command("to-queue <name>")
     .option(
       "-u, --uri <uri>",
@@ -20,9 +26,7 @@ export function buildProduceToQueueCommand(): Command {
       "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
       false
     )
-    .action((exchangeName: string, options: Command) => {
+    .action((exchangeName: string, options: ProduceToQueueCommand) => {
       actionProduceQueue(exchangeName, options).catch(reportErrorAndExit);
-    });
-
-  return produce as Command;
+    }) as ProduceToQueueCommand;
 }

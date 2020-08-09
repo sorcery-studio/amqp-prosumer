@@ -3,14 +3,14 @@ import { debug, Debugger } from "debug";
 import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
 import { waitForDrain } from "./channel.utils";
 import { readInput } from "../../utils/io";
-import { InputProvider } from "./types";
+import { InputProviderFn } from "./types";
 
 const logger = debug("amqp-prosumer:producer");
 
 export async function actionProduceExchange(
   exchangeName: string,
   options: Command,
-  fnReadInput: InputProvider = readInput,
+  fnReadInput: InputProviderFn = readInput,
   log: Debugger = logger
 ): Promise<boolean> {
   log("Staring the producer action");
@@ -28,7 +28,7 @@ export async function actionProduceExchange(
 
   // Read input and act for each and every message
   // ToDo: Use generator instead
-  await fnReadInput(async (message: string) => {
+  fnReadInput(async (message: string) => {
     const keepSending = await channel.publish(
       exchangeName,
       "",
@@ -40,7 +40,7 @@ export async function actionProduceExchange(
     }
 
     return keepSending;
-  }, log);
+  });
 
   await disconnectFromBroker(log, { connection, channel });
   log("Produce action executed successfully");
