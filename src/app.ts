@@ -4,14 +4,14 @@ import { CommandFactoryFn, reportErrorAndExit } from "./commands/common";
 
 export function createAndRun(
   version: string,
-  createCommand: CommandFactoryFn
+  cmdFactory: CommandFactoryFn
 ): void {
-  const program = createCommand();
+  const program = cmdFactory();
 
   program.version(version);
 
-  program.addCommand(buildConsumeCommand(createCommand));
-  program.addCommand(buildProduceCommand(createCommand));
+  program.addCommand(buildConsumeCommand(cmdFactory));
+  program.addCommand(buildProduceCommand(cmdFactory));
 
   program.parseAsync(process.argv).catch(reportErrorAndExit);
 }

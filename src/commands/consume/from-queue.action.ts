@@ -1,10 +1,14 @@
-import { Command } from "commander";
 import { debug } from "debug";
 import fs from "fs";
 import { Channel, ConsumeMessage, Replies } from "amqplib";
 import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
 import AssertQueue = Replies.AssertQueue;
-import { registerShutdownHandler } from "../common";
+import {
+  registerShutdownHandler,
+  RegisterShutdownHandlerFn,
+  ShutdownHandlerFn,
+} from "../common";
+import { ConsumeFromQueueCommand } from "./from-queue.command";
 
 type ConsumerFn = (msg: ConsumeMessage) => void;
 
@@ -19,7 +23,7 @@ export const defOnMessage: ConsumerFn = (msg) => {
 
 async function assertQueue(
   queueName: string,
-  command: Command,
+  command: ConsumeFromQueueCommand,
   channel: Channel
 ): Promise<AssertQueue> {
   log("Asserting queue", queueName);
@@ -35,9 +39,10 @@ async function assertQueue(
 
 export async function actionConsumeQueue(
   queueName: string,
-  command: Command,
-  onMessage: ConsumerFn = defOnMessage
-): Promise<void> {
+  command: ConsumeFromQueueCommand,
+  onMessage: ConsumerFn = defOnMessage,
+  onShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
+): Promise<ShutdownHandlerFn> {
   log("Staring the consumer for queue", queueName);
 
   const { connection, channel } = await connectToBroker(log, command.uri);
@@ -52,6 +57,8 @@ export async function actionConsumeQueue(
       return;
     }
 
+    log("Received message");
+
     onMessage(msg);
 
     channel.ack(msg);
@@ -63,12 +70,14 @@ export async function actionConsumeQueue(
     consumerTag
   );
 
-  registerShutdownHandler(
-    async (): Promise<void> => {
-      log("Shutting down the consumer");
-      await channel.cancel(consumerTag);
-      await disconnectFromBroker(log, { connection, channel });
-      log("Shutdown completed");
-    }
-  );
+  const shutdown = async (): Promise<void> => {
+    log("Shutting down the consumer");
+    await channel.cancel(consumerTag);
+    await disconnectFromBroker(log, { connection, channel });
+    log("Shutdown completed");
+  };
+
+  onShutdown(shutdown);
+
+  return shutdown;
 }

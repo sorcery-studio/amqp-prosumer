@@ -2,9 +2,18 @@ import { Command, program } from "commander";
 import { actionConsumeQueue } from "./from-queue.action";
 import { reportErrorAndExit } from "../common";
 
-export function buildConsumeFromQueueCommand(): Command {
-  const consume = program
-    .command("from-queue <name>")
+export interface ConsumeFromQueueCommand extends Command {
+  uri: string;
+  queueName: string;
+  assert: boolean;
+  exclusive: boolean;
+  durable: boolean;
+  autoDelete: boolean;
+}
+
+export function buildConsumeFromQueueCommand(): ConsumeFromQueueCommand {
+  return program
+    .command("from-queue <queueName>")
     .option(
       "-u, --uri <uri>",
       "The URL to the RabbitMQ instance",
@@ -30,9 +39,7 @@ export function buildConsumeFromQueueCommand(): Command {
       "Mark the resulting queue for automatic delete when if there will be no consumers",
       true
     )
-    .action((queueName: string, options: Command) => {
+    .action((queueName: string, options: ConsumeFromQueueCommand) => {
       actionConsumeQueue(queueName, options).catch(reportErrorAndExit);
-    });
-
-  return consume as Command;
+    }) as ConsumeFromQueueCommand;
 }

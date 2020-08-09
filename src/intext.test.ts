@@ -15,7 +15,7 @@ describe("Index", () => {
       const script = fs.readFileSync("./src/index.js").toString();
       expect(script).toContain("#!/usr/bin/env node");
     } else {
-      const script = fs.readFileSync("./src/produce.command.ts").toString();
+      const script = fs.readFileSync("./src/index.ts").toString();
       expect(script).toContain("#!/usr/bin/env node");
     }
   });

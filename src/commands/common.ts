@@ -11,7 +11,21 @@ export function reportErrorAndExit(err: Error): never {
   process.exit(1);
 }
 
-export function registerShutdownHandler(handler: () => Promise<void>): void {
+export type ShutdownHandlerFn = () => Promise<void>;
+
+export type RegisterShutdownHandlerFn = (handler: ShutdownHandlerFn) => void;
+
+/**
+ * Register a handler function which will be called for SIGINT/SIGTERM or on error conditions
+ *
+ * Some actions are long running and they need the SIGINT/SIGTERM signals to be sent
+ * in order to get closed. This function helps in implementing this behaviour
+ *
+ * @param handler The function which should be executed upon supported event
+ */
+export const registerShutdownHandler: RegisterShutdownHandlerFn = (
+  handler: ShutdownHandlerFn
+) => {
   (async (): Promise<void> => {
     // Each registered handler as its own state
     let isShuttingDown = false;
@@ -29,9 +43,10 @@ export function registerShutdownHandler(handler: () => Promise<void>): void {
       log("Shutdown handler complete");
     };
 
+    process.on("disconnect", shutdown);
     process.on("SIGINT", shutdown);
     process.on("SIGTERM", shutdown);
     process.on("uncaughtException", shutdown);
     process.on("unhandledRejection", shutdown);
   })();
-}
+};

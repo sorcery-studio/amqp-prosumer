@@ -2,21 +2,25 @@ import { createCommand } from "commander";
 import { createAndRun } from "./app";
 import { CommandFactoryFn } from "./commands/common";
 
-jest.mock("commander");
-
-const mockCommand = {
+const mockCommand: any = {
   version: jest.fn(),
-  command: jest.fn(),
+  command: jest.fn(() => mockCommand),
   parseAsync: jest.fn(
     () =>
       new Promise((resolve) => {
         resolve();
       })
   ),
-  option: jest.fn(),
+  option: jest.fn(() => mockCommand),
   action: jest.fn(),
   addCommand: jest.fn(),
 };
+
+jest.mock("commander", () => {
+  return {
+    program: mockCommand,
+  };
+});
 
 (<jest.Mock>createCommand).mockImplementation(() => {
   return mockCommand;

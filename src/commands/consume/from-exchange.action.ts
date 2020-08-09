@@ -4,7 +4,11 @@ import fs from "fs";
 import { Channel, ConsumeMessage, Replies } from "amqplib";
 import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
 import AssertExchange = Replies.AssertExchange;
-import { registerShutdownHandler } from "../common";
+import {
+  registerShutdownHandler,
+  RegisterShutdownHandlerFn,
+  ShutdownHandlerFn,
+} from "../common";
 
 type ConsumerFn = (msg: ConsumeMessage) => void;
 
@@ -38,8 +42,9 @@ async function assertExchange(
 export async function actionConsumeExchange(
   exchangeName: string,
   command: Command,
-  onMessage: ConsumerFn = defOnMessage
-): Promise<void> {
+  onMessage: ConsumerFn = defOnMessage,
+  onShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
+): Promise<ShutdownHandlerFn> {
   log("Staring the consumer for exchange", exchangeName);
 
   const { connection, channel } = await connectToBroker(log, command.uri);
@@ -75,12 +80,14 @@ export async function actionConsumeExchange(
     consumerTag
   );
 
-  registerShutdownHandler(
-    async (): Promise<void> => {
-      log("Shutting down the consumer");
-      await channel.cancel(consumerTag);
-      await disconnectFromBroker(log, { connection, channel });
-      log("Shutdown completed");
-    }
-  );
+  const shutdown = async (): Promise<void> => {
+    log("Shutting down the consumer");
+    await channel.cancel(consumerTag);
+    await disconnectFromBroker(log, { connection, channel });
+    log("Shutdown completed");
+  };
+
+  onShutdown(shutdown);
+
+  return shutdown;
 }
