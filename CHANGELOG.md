@@ -2,9 +2,12 @@
 
 ## [Unreleased] - YYYY-MM-DD
 
+## [0.3.0] - 2020-08-10
+
 ### Changed
 
 * The `produce` command no longer waits 2 seconds before exit.
+* Bump `lodash` from 4.17.15 to 4.17.19 - security update
 
 ## [0.2.4] - 2020-06-30
 
