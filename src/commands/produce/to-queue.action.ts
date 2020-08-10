@@ -27,10 +27,7 @@ export async function actionProduceQueue(
   }
 
   fnReadInput(async (message: string) => {
-    const keepSending = await channel.sendToQueue(
-      queueName,
-      Buffer.from(message)
-    );
+    const keepSending = channel.sendToQueue(queueName, Buffer.from(message));
 
     if (!keepSending) {
       await waitForDrain(channel);

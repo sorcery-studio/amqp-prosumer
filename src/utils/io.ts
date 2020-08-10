@@ -6,6 +6,7 @@ import { InputProviderFn } from "../commands/produce/types";
  */
 export type OnMessageFn = (message: string) => Promise<boolean>;
 
+// TODO: Async on-message without await leads to EventEmitter memory leak warning
 export const readInput: InputProviderFn = (onMessage: OnMessageFn) => {
   if (process.stdin.isTTY) {
     throw new Error("No input provided over STDIN");
