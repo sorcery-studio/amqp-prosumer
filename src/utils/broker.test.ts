@@ -1,11 +1,13 @@
-import { connectToBroker, disconnectFromBroker } from "./broker";
+import { connectToBroker, disconnectFromBroker, waitForDrain } from "./broker";
 import { Debugger } from "debug";
+
+const log = (jest.fn() as unknown) as Debugger;
+
+jest.unmock("amqplib");
 
 describe("Broker Utils", () => {
   describe("Connecting to broker", () => {
     test("Connection can be opened and closed", async () => {
-      const log = (jest.fn() as unknown) as Debugger;
-
       const brokerConnection = await connectToBroker(log, "amqp://localhost");
 
       // Duck type check to confirm valid result
@@ -20,6 +22,22 @@ describe("Broker Utils", () => {
 
       expect(spyChClose).toBeCalled();
       expect(spyConnClose).toBeCalled();
+    });
+  });
+
+  describe("Waiting for drain helper", () => {
+    test("can be used to await for the drain event on a channel", async () => {
+      const broker = await connectToBroker(log, "amqp://localhost");
+
+      setTimeout(() => {
+        broker.channel.emit("drain");
+      });
+
+      await waitForDrain(broker.channel);
+
+      await disconnectFromBroker(log, broker);
+
+      expect(true).toEqual(true);
     });
   });
 });

@@ -1,7 +1,10 @@
 import { Command } from "commander";
 import { debug, Debugger } from "debug";
-import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
-import { waitForDrain } from "./channel.utils";
+import {
+  connectToBroker,
+  disconnectFromBroker,
+  waitForDrain,
+} from "../../utils/broker";
 import { InputReaderGen, readInputFile } from "../../utils/io";
 
 const logger = debug("amqp-prosumer:producer");
