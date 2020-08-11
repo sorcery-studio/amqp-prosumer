@@ -1,14 +1,14 @@
 import fs from "fs";
 
-export type InputProviderFn = () => Generator<string>;
+export type InputProviderFn = (
+  inputFile?: string | number
+) => Generator<string>;
 
-export const readInput: InputProviderFn = function* () {
-  if (process.stdin.isTTY) {
-    throw new Error("No input provided over STDIN");
-  }
-
+export const readInput: InputProviderFn = function* (
+  inputFile: string | number = 0
+) {
   const messages = fs
-    .readFileSync(0, "utf-8")
+    .readFileSync(inputFile, "utf-8")
     .split("\n")
     .filter((message) => message !== "");
 
