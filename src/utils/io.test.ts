@@ -1,4 +1,4 @@
-import { readInput } from "./io";
+import { readInputFile } from "./io";
 import * as fs from "fs";
 
 describe("I/O utilities - STDIN input reader", () => {
@@ -6,7 +6,7 @@ describe("I/O utilities - STDIN input reader", () => {
     const lines = [];
 
     const inputFile = fs.realpathSync("./src/__mocks__/testInputFile.txt");
-    for (const line of readInput(inputFile)) {
+    for (const line of readInputFile(inputFile)) {
       lines.push(line);
     }
 

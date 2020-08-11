@@ -2,14 +2,14 @@ import { Command } from "commander";
 import { debug, Debugger } from "debug";
 import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
 import { waitForDrain } from "./channel.utils";
-import { InputProviderFn, readInput } from "../../utils/io";
+import { InputReaderGen, readInputFile } from "../../utils/io";
 
 const logger = debug("amqp-prosumer:producer");
 
 export async function actionProduceQueue(
   queueName: string,
   options: Command,
-  fnReadInput: InputProviderFn = readInput,
+  fnReadInput: InputReaderGen = readInputFile,
   log: Debugger = logger
 ): Promise<boolean> {
   log("Staring the producer action");

@@ -1,12 +1,17 @@
 import fs from "fs";
 
-export type InputProviderFn = (
-  inputFile?: string | number
-) => Generator<string>;
+export type InputReaderGen = (inputFile?: string | number) => Generator<string>;
 
-export const readInput: InputProviderFn = function* (
+/**
+ * Reads the input file and yields each line separately
+ *
+ * @param inputFile The input file to read. If not provided, STDIN will be used
+ *
+ * @returns String representing a line of input
+ */
+export const readInputFile: InputReaderGen = function* (
   inputFile: string | number = 0
-) {
+): Generator<string> {
   const messages = fs
     .readFileSync(inputFile, "utf-8")
     .split("\n")
