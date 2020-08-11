@@ -1,19 +1,18 @@
 import fs from "fs";
-import { InputProviderFn } from "../commands/produce/types";
 
-/**
- * Represents a callback which will be called for each message (line) from the input
- */
-export type OnMessageFn = (message: string) => Promise<boolean>;
+export type InputProviderFn = () => Generator<string>;
 
-// TODO: Async on-message without await leads to EventEmitter memory leak warning
-export const readInput: InputProviderFn = (onMessage: OnMessageFn) => {
+export const readInput: InputProviderFn = function* () {
   if (process.stdin.isTTY) {
     throw new Error("No input provided over STDIN");
   }
 
-  fs.readFileSync(0, "utf-8")
+  const messages = fs
+    .readFileSync(0, "utf-8")
     .split("\n")
-    .filter((message) => message !== "")
-    .forEach(onMessage);
+    .filter((message) => message !== "");
+
+  for (const message of messages) {
+    yield message;
+  }
 };

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import * as amqp from "amqplib";
-import { InputProviderFn } from "./types";
 import { actionProduceExchange } from "./to-exchange.action";
+import { InputProviderFn } from "../../utils/io";
 
 jest.unmock("amqplib");
 
@@ -39,8 +39,8 @@ describe("Produce To Exchange Action", () => {
       done();
     });
 
-    const inputProvider: InputProviderFn = (onMessage): void => {
-      onMessage("test-message");
+    const inputProvider: InputProviderFn = function* () {
+      yield "test-message";
     };
 
     const result = actionProduceExchange(

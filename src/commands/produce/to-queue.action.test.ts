@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import * as amqp from "amqplib";
 import { actionProduceQueue } from "./to-queue.action";
-import { InputProviderFn } from "./types";
+import { InputProviderFn } from "../../utils/io";
 
 jest.unmock("amqplib");
 
@@ -32,8 +32,8 @@ describe("Produce To Queue Action", () => {
       done();
     });
 
-    const inputProvider: InputProviderFn = (onMessage): void => {
-      onMessage("test-message");
+    const inputProvider: InputProviderFn = function* () {
+      yield "test-message";
     };
 
     const result = actionProduceQueue(
