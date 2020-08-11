@@ -27,6 +27,7 @@ export async function actionProduceExchange(
 
   // Read input and act for each and every message
   for (const message of fnReadInput()) {
+    log("Publishing message to exchange: %s", message);
     const keepSending = await channel.publish(
       exchangeName,
       "",

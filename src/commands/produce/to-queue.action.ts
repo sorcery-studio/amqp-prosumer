@@ -26,6 +26,7 @@ export async function actionProduceQueue(
   }
 
   for (const message of fnReadInput()) {
+    log("Sending message to queue: %s", message);
     const keepSending = channel.sendToQueue(queueName, Buffer.from(message));
 
     if (!keepSending) {
