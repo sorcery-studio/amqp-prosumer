@@ -19,7 +19,7 @@
   "scripts": {
     "prebuild": "rimraf dist/",
     "build": "tsc --project tsconfig.json",
-    "postbuild": "cp package*.json README.md LICENSE.md CHANGELOG.md dist/ && cp src/__mocks__/testInputFile.txt dist/src/__mocks__",
+    "postbuild": "cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "rimraf dist/",
     "test": "jest src/",
     "test:coverage": "jest src/ --collectCoverage --collectCoverageFrom='src/**/*.ts'",

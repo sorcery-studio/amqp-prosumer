@@ -21,7 +21,7 @@ export async function connectToBroker(
     log("Channel#close()");
 
     if (serverError) {
-      log("Server Error Received", serverError);
+      log("Received Channel#close() with Error", serverError);
     }
   });
 
@@ -42,7 +42,7 @@ export async function connectToBroker(
   });
 
   channel.on("unblocked", (reason) => {
-    log("Channel#blocked()", reason);
+    log("Channel#unblocked()", reason);
   });
 
   return { connection, channel };
