@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { debug } from "debug";
+import { debug, Debugger } from "debug";
 import fs from "fs";
 import { Channel, ConsumeMessage, Replies } from "amqplib";
 import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
@@ -10,11 +10,12 @@ import {
   ShutdownHandlerFn,
 } from "../common";
 
-type ConsumerFn = (msg: ConsumeMessage) => void;
+export type ConsumeCallback = (msg: ConsumeMessage | null) => void;
+export type ConsumerFn = (msg: ConsumeMessage) => void;
 
 const log = debug("amqp-prosumer:consumer");
 
-export const defOnMessage: ConsumerFn = (msg) => {
+export const defOnMessage: ConsumerFn = (msg): void => {
   const write = msg.content.toString("utf-8");
   log("Consuming message", write);
 
@@ -35,8 +36,31 @@ async function assertExchange(
     "topic",
     exchangeOptions
   );
+
   log("Exchange %s asserted", exchange.exchange, exchangeOptions);
+
   return exchange;
+}
+
+/**
+ * @internal Exposed only for test purposes
+ * @private
+ */
+export function createConsumerCallback(
+  log: Debugger,
+  channel: Channel,
+  onMessage: ConsumerFn
+): ConsumeCallback {
+  return (msg: ConsumeMessage | null): void => {
+    if (msg === null) {
+      log("Consumer cancelled by server");
+      return;
+    }
+
+    onMessage(msg);
+
+    channel.ack(msg);
+  };
 }
 
 export async function actionConsumeExchange(
@@ -58,21 +82,14 @@ export async function actionConsumeExchange(
     durable: false,
     exclusive: true,
   });
+
   log("Asserted temporary queue for consumer purposes", queue.queue);
 
   await channel.bindQueue(queue.queue, exchangeName, "#");
   log("Bound queue %s to exchange %s", queue.queue, exchangeName);
 
-  const { consumerTag } = await channel.consume(queue.queue, (msg) => {
-    if (msg === null) {
-      log("Consumer cancelled by server");
-      return;
-    }
-
-    onMessage(msg);
-
-    channel.ack(msg);
-  });
+  const consumeCallback = createConsumerCallback(log, channel, onMessage);
+  const { consumerTag } = await channel.consume(queue.queue, consumeCallback);
 
   log(
     "Consumer started, input exchange %s, consumer tag: %s",
