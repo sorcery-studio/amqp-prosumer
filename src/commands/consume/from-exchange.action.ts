@@ -53,7 +53,7 @@ export function createConsumerCallback(
 ): ConsumeCallback {
   return (msg: ConsumeMessage | null): void => {
     if (msg === null) {
-      log("Consumer cancelled by server");
+      log("Consumer cancelled by server, you should shut down!");
       return;
     }
 

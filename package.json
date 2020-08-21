@@ -25,10 +25,10 @@
     "test:coverage": "jest src/ --collectCoverage --collectCoverageFrom='src/**/*.ts'",
     "pretest:build": "npm run build",
     "test:build": "cd dist/ && jest src/",
-    "lint:check": "eslint src/",
+    "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format:check": "prettier src/ -c",
-    "format:fix": "prettier src/ --write",
+    "format": "prettier src/ --write",
     "update:deps": "npm outdated --parseable | awk '{ split($0, a, \":\"); print a[4]; }' | xargs npm install"
   },
   "author": "Grzegorz Godlewski <ggodlewski@sorcerystudio.com>",
@@ -64,7 +64,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run format:check && npm run lint:check",
+      "pre-commit": "npm run format:check && npm run lint",
       "pre-push": "npm run test"
     }
   }

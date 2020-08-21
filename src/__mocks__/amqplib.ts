@@ -1,9 +1,9 @@
 export const queue = {
-  queue: "",
+  queue: "test-queue",
 };
 
 export const exchange = {
-  exchange: "",
+  exchange: "test-exchange",
 };
 
 export const channel = {
@@ -14,6 +14,13 @@ export const channel = {
   publish: jest.fn(() => true),
   sendToQueue: jest.fn(() => true),
   close: jest.fn(),
+  bindQueue: jest.fn(),
+  consume: jest.fn(() => {
+    return {
+      consumerTag: "test-consumer-tag",
+    };
+  }),
+  cancel: jest.fn(),
 };
 
 export const connection = {
@@ -21,4 +28,4 @@ export const connection = {
   close: jest.fn(),
 };
 
-export const connect = jest.fn(() => connection);
+export const connect = jest.fn(async () => connection);
