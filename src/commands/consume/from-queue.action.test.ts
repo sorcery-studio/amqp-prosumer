@@ -1,6 +1,7 @@
 import * as amqp from "amqplib";
 import { actionConsumeQueue } from "./from-queue.action";
 import { ConsumeFromQueueCommand } from "./from-queue.command";
+import { ConsumeResult } from "../../utils/amqp-adapter";
 
 jest.unmock("amqplib");
 
@@ -26,6 +27,8 @@ describe("Consume From Queue Action", () => {
         await ch.close();
         await conn.close();
         done();
+
+        return ConsumeResult.ACK;
       }
     );
 

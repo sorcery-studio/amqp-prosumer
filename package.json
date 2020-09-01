@@ -25,7 +25,7 @@
     "test:coverage": "jest src/ --collectCoverage --collectCoverageFrom='src/**/*.ts'",
     "pretest:build": "npm run build",
     "test:build": "cd dist/ && jest src/",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && tsc --project tsconfig.json --noEmit",
     "lint:fix": "eslint src/ --fix",
     "format:check": "prettier src/ -c",
     "format": "prettier src/ --write",

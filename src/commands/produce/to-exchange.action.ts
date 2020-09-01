@@ -1,10 +1,6 @@
 import { Command } from "commander";
 import { debug, Debugger } from "debug";
-import {
-  connectToBroker,
-  disconnectFromBroker,
-  waitForDrain,
-} from "../../utils/broker";
+import { createAmqpAdapter } from "../../utils/amqp-adapter";
 import { InputReaderGen, readInputFile } from "../../utils/io";
 
 const logger = debug("amqp-prosumer:producer");
@@ -17,32 +13,21 @@ export async function actionProduceExchange(
 ): Promise<boolean> {
   log("Staring the producer action");
 
-  const { connection, channel } = await connectToBroker(log, options.uri);
-
-  if (options.assert) {
-    const exOpts = {
+  const { publish, disconnect } = await createAmqpAdapter({
+    url: options.uri,
+    exchange: {
+      name: exchangeName,
       durable: options.durable,
       autoDelete: options.autoDelete,
-    };
-    const ex = await channel.assertExchange(exchangeName, "topic", exOpts);
-    log("Target exchange %s asserted", ex.exchange);
-  }
+      type: "topic",
+    },
+  });
 
-  // Read input and act for each and every message
   for (const message of fnReadInput()) {
-    log("Publishing message to exchange: %s", message);
-    const keepSending = await channel.publish(
-      exchangeName,
-      "",
-      Buffer.from(message)
-    );
-
-    if (!keepSending) {
-      await waitForDrain(channel);
-    }
+    await publish(message);
   }
 
-  await disconnectFromBroker(log, { connection, channel });
+  await disconnect();
   log("Produce action executed successfully");
 
   return true;

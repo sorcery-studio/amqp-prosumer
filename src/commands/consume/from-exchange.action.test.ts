@@ -1,19 +1,12 @@
 import { Command } from "commander";
 import * as amqp from "amqplib";
 import fs from "fs";
-import {
-  actionConsumeExchange,
-  createConsumerCallback,
-  defOnMessage,
-} from "./from-exchange.action";
-import { Channel, ConsumeMessage } from "amqplib";
-import { Debugger } from "debug";
+import { actionConsumeExchange, defOnMessage } from "./from-exchange.action";
+import { ConsumeMessage } from "amqplib";
 import { channel, connection } from "../../__mocks__/amqplib";
 
 jest.mock("fs");
 jest.mock("amqplib");
-
-const log = (jest.fn() as unknown) as Debugger;
 
 describe("Consume From Exchange Action Unit Tests", () => {
   beforeEach(() => {
@@ -82,6 +75,7 @@ describe("Consume From Exchange Action Unit Tests", () => {
 
     expect(channel.assertExchange).toBeCalledWith(exchangeName, "topic", {
       durable: false,
+      autoDelete: true,
     });
 
     expect(channel.bindQueue).toBeCalledWith(
@@ -89,40 +83,6 @@ describe("Consume From Exchange Action Unit Tests", () => {
       "test-exchange",
       "#"
     );
-  });
-
-  test("create consumer callback logs when the callback is called with null", () => {
-    const ch = ({
-      ack: jest.fn(),
-    } as unknown) as Channel;
-
-    const onMessage = jest.fn();
-    const callback = createConsumerCallback(log, ch, onMessage);
-
-    callback(null);
-
-    expect(log).toBeCalledWith(
-      "Consumer cancelled by server, you should shut down!"
-    );
-    expect(ch.ack).not.toBeCalled();
-    expect(onMessage).not.toBeCalled();
-  });
-
-  test("create consumer callback passes the message to onMessage and acks it", () => {
-    const ch = ({
-      ack: jest.fn(),
-    } as unknown) as Channel;
-
-    const onMessage = jest.fn();
-    const callback = createConsumerCallback(log, ch, onMessage);
-
-    callback({ content: Buffer.from("example-message") } as ConsumeMessage);
-
-    expect(log).not.toBeCalledWith(
-      "Consumer cancelled by server, you should shut down!"
-    );
-    expect(ch.ack).toBeCalled();
-    expect(onMessage).toBeCalled();
   });
 
   test("defOnMessage writes file to system", () => {

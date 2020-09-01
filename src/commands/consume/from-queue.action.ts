@@ -1,8 +1,10 @@
 import { debug } from "debug";
 import fs from "fs";
-import { Channel, ConsumeMessage, Replies } from "amqplib";
-import { connectToBroker, disconnectFromBroker } from "../../utils/broker";
-import AssertQueue = Replies.AssertQueue;
+import {
+  createAmqpAdapter,
+  ConsumeCallback,
+  ConsumeResult,
+} from "../../utils/amqp-adapter";
 import {
   registerShutdownHandler,
   RegisterShutdownHandlerFn,
@@ -10,32 +12,16 @@ import {
 } from "../common";
 import { ConsumeFromQueueCommand } from "./from-queue.command";
 
-type ConsumerFn = (msg: ConsumeMessage) => void;
-
 const log = debug("amqp-prosumer:consumer");
 
-export const defOnMessage: ConsumerFn = (msg) => {
+export const defOnMessage: ConsumeCallback = async (msg) => {
   const write = msg.content.toString("utf-8");
   log("Consuming message", write);
 
   fs.writeFileSync(1, write + "\n");
-};
 
-async function assertQueue(
-  queueName: string,
-  command: ConsumeFromQueueCommand,
-  channel: Channel
-): Promise<AssertQueue> {
-  log("Asserting queue", queueName);
-  const queueOptions = {
-    durable: command.durable,
-    autoDelete: command.autoDelete,
-    exclusive: command.exclusive,
-  };
-  const queue = await channel.assertQueue(queueName, queueOptions);
-  log("Queue %s asserted", queue.queue, queueOptions);
-  return queue;
-}
+  return ConsumeResult.ACK;
+};
 
 /**
  * Starts the consumer action and returns the shutdown function
@@ -50,29 +36,30 @@ async function assertQueue(
 export async function actionConsumeQueue(
   queueName: string,
   command: ConsumeFromQueueCommand,
-  onMessage: ConsumerFn = defOnMessage,
+  onMessage: ConsumeCallback = defOnMessage,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   log("Staring the consumer for queue", queueName);
 
-  const { connection, channel } = await connectToBroker(log, command.uri);
-
-  if (command.assert) {
-    await assertQueue(queueName, command, channel);
-  }
-
-  const { consumerTag } = await channel.consume(queueName, (msg) => {
-    if (msg === null) {
-      log("Consumer cancelled by server");
-      return;
-    }
-
-    log("Received message");
-
-    onMessage(msg);
-
-    channel.ack(msg);
+  const { consume, cancel, disconnect } = await createAmqpAdapter({
+    url: command.uri,
+    assert: command.assert,
+    queue: {
+      name: queueName,
+      durable: command.durable,
+      autoDelete: command.autoDelete,
+      exclusive: command.exclusive,
+    },
   });
+
+  const onShutdown = async (): Promise<void> => {
+    log("Shutting down the consumer");
+    await cancel(consumerTag);
+    await disconnect();
+    log("Shutdown completed");
+  };
+
+  const { consumerTag } = await consume(onMessage, onShutdown);
 
   log(
     "Consumer started, input queue %s, consumer tag: %s",
@@ -80,14 +67,16 @@ export async function actionConsumeQueue(
     consumerTag
   );
 
-  const shutdown = async (): Promise<void> => {
-    log("Shutting down the consumer");
-    await channel.cancel(consumerTag);
-    await disconnectFromBroker(log, { connection, channel });
-    log("Shutdown completed");
-  };
+  // Note, we're not using function composition
 
-  regShutdown(shutdown);
+  // input: consumer configuration
+  // output: confirmations of message writes
 
-  return shutdown;
+  // consumerConfig
+  // createConsumer (cfg)
+  // consume (consumer)
+
+  regShutdown(onShutdown);
+
+  return onShutdown;
 }
