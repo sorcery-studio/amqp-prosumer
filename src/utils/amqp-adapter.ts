@@ -1,3 +1,7 @@
+/**
+ * This file serves as a "adapter" layer, for FP-like approach and `amqplib` which is more OOP-oriented
+ */
+
 import { debug } from "debug";
 import * as amqplib from "amqplib";
 import { Channel, Connection, ConsumeMessage, Options } from "amqplib";
@@ -15,13 +19,6 @@ export interface IConnectionContext {
   readonly connection: Connection;
   readonly queueName?: string;
   readonly exchangeName?: string;
-}
-
-/**
- * @deprecated
- */
-export interface IExchangeContext extends IConnectionContext {
-  readonly exchangeName: string;
 }
 
 export interface IConsumerContext extends IConnectionContext {
@@ -257,49 +254,6 @@ export async function publish(
 
   return context;
 }
-
-/**
- * Establishes connection to the message broker and provides a set of "connected" functions
- *   which can be used by the client code to interact with the broker.
- *
- * @param options
- *
- * @deprecated
- */
-// export async function createAmqpAdapter(
-//   options: ConnectionOptions
-// ): Promise<AmqpAdapter> {
-//   const connection = await connectToBroker(options.url);
-//   const channel = await createChannel(connection);
-//
-//   // Publish to exchange - !q ex
-//   // Publish to queue - q !ex
-//   // Consume from queue - q !ex
-//   // Consume from exchange - q ex
-//   // TODO: Consume, always requires queue, exchange is optional - this code shouldn't care...
-//   //   In fact, the consume and publish functions are the ones who have enough context to do this
-//
-//   if (queueName && exchangeName && options.bind) {
-//     await channel.bindQueue(queueName, exchangeName, options.bind.routingKey);
-//
-//     log(
-//       "Bound queue %s to exchange %s on routing key %s",
-//       queueName,
-//       exchangeName,
-//       options.bind.routingKey
-//     );
-//   }
-//
-//   const disconnect = async (): Promise<void> => {
-//     log("Closing channel");
-//     await channel.close();
-//     log("Channel closed");
-//
-//     log("Shutting down the connection");
-//     await connection.close();
-//     log("Shutdown completed");
-//   };
-// }
 
 /**
  * Helper function which can be used to block execution (sending further messages)
