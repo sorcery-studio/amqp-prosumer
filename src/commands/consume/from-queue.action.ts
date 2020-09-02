@@ -1,15 +1,17 @@
 import { debug } from "debug";
 import fs from "fs";
 import {
-  createAmqpAdapter,
+  cancelConsumer,
+  closeChannel,
+  connectToBroker,
+  consume,
   ConsumeCallback,
   ConsumeResult,
+  createChannel,
+  declareQueue,
+  disconnectFromBroker,
 } from "../../utils/amqp-adapter";
-import {
-  registerShutdownHandler,
-  RegisterShutdownHandlerFn,
-  ShutdownHandlerFn,
-} from "../common";
+import { registerShutdownHandler, RegisterShutdownHandlerFn } from "../common";
 import { ConsumeFromQueueCommand } from "./from-queue.command";
 
 const log = debug("amqp-prosumer:consumer");
@@ -38,45 +40,28 @@ export async function actionConsumeQueue(
   command: ConsumeFromQueueCommand,
   onMessage: ConsumeCallback = defOnMessage,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
-): Promise<ShutdownHandlerFn> {
+): Promise<void> {
   log("Staring the consumer for queue", queueName);
 
-  const { consume, cancel, disconnect } = await createAmqpAdapter({
-    url: command.uri,
-    assert: command.assert,
-    queue: {
-      name: queueName,
-      durable: command.durable,
-      autoDelete: command.autoDelete,
-      exclusive: command.exclusive,
-    },
-  });
-
-  const onShutdown = async (): Promise<void> => {
-    log("Shutting down the consumer");
-    await cancel(consumerTag);
-    await disconnect();
-    log("Shutdown completed");
+  const queueOptions = {
+    name: queueName,
+    durable: command.durable,
+    autoDelete: command.autoDelete,
+    exclusive: command.exclusive,
   };
 
-  const { consumerTag } = await consume(onMessage, onShutdown);
-
-  log(
-    "Consumer started, input queue %s, consumer tag: %s",
-    queueName,
-    consumerTag
-  );
-
-  // Note, we're not using function composition
-
-  // input: consumer configuration
-  // output: confirmations of message writes
-
-  // consumerConfig
-  // createConsumer (cfg)
-  // consume (consumer)
-
-  regShutdown(onShutdown);
-
-  return onShutdown;
+  connectToBroker(command.uri)
+    .then(createChannel)
+    .then(declareQueue(queueName, queueOptions, command.assert))
+    .then(consume(onMessage))
+    .then((context) => {
+      regShutdown(async () => {
+        cancelConsumer(context)
+          .then(closeChannel)
+          .then(disconnectFromBroker)
+          .catch((err) => console.error("Error during shutdown", err));
+      });
+      return context;
+    })
+    .catch((err) => console.error(err));
 }

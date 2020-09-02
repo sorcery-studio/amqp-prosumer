@@ -1,6 +1,14 @@
 import { Command } from "commander";
 import { debug, Debugger } from "debug";
-import { createAmqpAdapter } from "../../utils/amqp-adapter";
+import {
+  closeChannel,
+  connectToBroker,
+  createChannel,
+  declareQueue,
+  disconnectFromBroker,
+  IQueueContext,
+  sendToQueue,
+} from "../../utils/amqp-adapter";
 import { InputReaderGen, readInputFile } from "../../utils/io";
 
 const logger = debug("amqp-prosumer:producer");
@@ -10,26 +18,33 @@ export async function actionProduceQueue(
   options: Command,
   fnReadInput: InputReaderGen = readInputFile,
   log: Debugger = logger
-): Promise<boolean> {
+): Promise<void> {
   log("Staring the producer action");
 
-  const { sendToQueue, disconnect } = await createAmqpAdapter({
-    url: options.uri,
-    assert: options.assert,
-    queue: {
-      name: queueName,
-      durable: options.durable,
-      autoDelete: options.autoDelete,
-    },
-  });
+  // Form of composition
 
-  for (const message of fnReadInput()) {
-    await sendToQueue(message);
+  const queueOptions = {
+    durable: options.durable,
+    autoDelete: options.autoDelete,
+  };
+
+  async function readAndSendInput(
+    context: IQueueContext
+  ): Promise<IQueueContext> {
+    // Generators, can't go over this, fnReadInput can be provided from outside!
+    for (const message of fnReadInput()) {
+      await sendToQueue(context.channel, context.queueName, message);
+    }
+
+    return context;
   }
 
-  await disconnect();
-
-  log("Produce action executed successfully");
-
-  return true;
+  connectToBroker(options.uri)
+    .then(createChannel)
+    .then(declareQueue(queueName, queueOptions, options.assert))
+    .then(readAndSendInput)
+    .then(closeChannel)
+    .then(disconnectFromBroker)
+    .then(() => log("Produce action executed successfully"))
+    .catch((err) => console.error("Something bad happened", err));
 }
