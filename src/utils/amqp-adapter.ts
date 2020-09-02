@@ -10,15 +10,16 @@ export enum ConsumeResult {
   REJECT,
 }
 
-interface IConnectionContext {
+export interface IConnectionContext {
   readonly channel: Channel;
   readonly connection: Connection;
+  readonly queueName?: string;
+  readonly exchangeName?: string;
 }
 
-export interface IQueueContext extends IConnectionContext {
-  readonly queueName: string;
-}
-
+/**
+ * @deprecated
+ */
 export interface IExchangeContext extends IConnectionContext {
   readonly exchangeName: string;
 }
@@ -119,8 +120,8 @@ export function declareQueue(
   queueName: string,
   queueOptions: Options.AssertQueue,
   assert: boolean
-): (context: IConnectionContext) => Promise<IQueueContext> {
-  return async (context: IConnectionContext): Promise<IQueueContext> => {
+): (context: IConnectionContext) => Promise<IConnectionContext> {
+  return async (context: IConnectionContext): Promise<IConnectionContext> => {
     log("Declaring queue %s", queueName);
     return {
       ...context,
@@ -136,11 +137,9 @@ export function declareExchange(
   type: string,
   options: Options.AssertExchange,
   assert: boolean
-): (
-  context: IConnectionContext | IQueueContext
-) => Promise<IExchangeContext | IBindingContext> {
+): (context: IConnectionContext) => Promise<IConnectionContext> {
   log("Declaring exchange %s", exchangeName);
-  return async (context): Promise<IExchangeContext | IBindingContext> => {
+  return async (context): Promise<IConnectionContext> => {
     return {
       ...context,
       exchangeName: assert
@@ -151,18 +150,23 @@ export function declareExchange(
   };
 }
 
-interface IBindingContext extends IQueueContext, IExchangeContext {}
-
 export function bindQueueAndExchange(
   binding = "#"
-): (ctx: IBindingContext) => Promise<IBindingContext> {
-  return async (context: IBindingContext): Promise<IBindingContext> => {
+): (ctx: IConnectionContext) => Promise<IConnectionContext> {
+  return async (context: IConnectionContext): Promise<IConnectionContext> => {
+    if (!context.queueName || !context.exchangeName) {
+      throw new Error(
+        "Cloud not bind queue with exchange, because one of the names is missing"
+      );
+    }
+
     log(
       "Binding queue %s to exchange %s with %s",
       context.queueName,
       context.exchangeName,
       binding
     );
+
     await context.channel.bindQueue(
       context.queueName,
       context.exchangeName,
@@ -175,7 +179,7 @@ export function bindQueueAndExchange(
 
 export function consume(
   onMessage: ConsumeCallback
-): (context: IQueueContext) => Promise<IConsumerContext> {
+): (context: IConnectionContext) => Promise<IConsumerContext> {
   return async (context): Promise<IConsumerContext> => {
     if (!context.queueName) {
       throw new Error("Missing queue name");
@@ -232,9 +236,9 @@ export async function sendToQueue(
 }
 
 export async function publish(
-  context: IExchangeContext,
+  context: IConnectionContext,
   message: string
-): Promise<IExchangeContext> {
+): Promise<IConnectionContext> {
   log("Publishing message to an exchange: %s", message);
 
   if (!context.exchangeName) {

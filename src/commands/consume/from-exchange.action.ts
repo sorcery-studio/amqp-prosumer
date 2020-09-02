@@ -51,8 +51,6 @@ export async function actionConsumeExchange(
     .then(createChannel)
     .then(declareQueue("", qOpts, true))
     .then(declareExchange(exchangeName, "topic", exOpts, command.assert))
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     .then(bindQueueAndExchange("#"))
     .then(consume(onMessage))
     .then((context) => {

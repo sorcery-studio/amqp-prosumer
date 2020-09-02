@@ -43,8 +43,8 @@ export async function actionConsumeQueue(
 ): Promise<void> {
   log("Staring the consumer for queue", queueName);
 
-  const queueOptions = {
-    name: queueName,
+  // ToDo: Create a function to build these parameters
+  const qOpts = {
     durable: command.durable,
     autoDelete: command.autoDelete,
     exclusive: command.exclusive,
@@ -52,7 +52,7 @@ export async function actionConsumeQueue(
 
   connectToBroker(command.uri)
     .then(createChannel)
-    .then(declareQueue(queueName, queueOptions, command.assert))
+    .then(declareQueue(queueName, qOpts, command.assert))
     .then(consume(onMessage))
     .then((context) => {
       regShutdown(async () => {

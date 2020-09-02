@@ -7,7 +7,7 @@ import {
   createChannel,
   declareExchange,
   disconnectFromBroker,
-  IExchangeContext,
+  IConnectionContext,
   publish,
 } from "../../utils/amqp-adapter";
 
@@ -27,8 +27,8 @@ export async function actionProduceExchange(
   };
 
   const readAndSendInput = async (
-    context: IExchangeContext
-  ): Promise<IExchangeContext> => {
+    context: IConnectionContext
+  ): Promise<IConnectionContext> => {
     for (const message of fnReadInput()) {
       await publish(context, message);
     }

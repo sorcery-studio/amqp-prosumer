@@ -6,7 +6,7 @@ import {
   createChannel,
   declareQueue,
   disconnectFromBroker,
-  IQueueContext,
+  IConnectionContext,
   sendToQueue,
 } from "../../utils/amqp-adapter";
 import { InputReaderGen, readInputFile } from "../../utils/io";
@@ -29,8 +29,12 @@ export async function actionProduceQueue(
   };
 
   async function readAndSendInput(
-    context: IQueueContext
-  ): Promise<IQueueContext> {
+    context: IConnectionContext
+  ): Promise<IConnectionContext> {
+    if (!context.queueName) {
+      throw new Error("Can't send to queue if the the name is not defined");
+    }
+
     // Generators, can't go over this, fnReadInput can be provided from outside!
     for (const message of fnReadInput()) {
       await sendToQueue(context.channel, context.queueName, message);
