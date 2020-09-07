@@ -11,7 +11,11 @@ import {
   declareQueue,
   disconnectFromBroker,
 } from "../../utils/amqp-adapter";
-import { registerShutdownHandler, RegisterShutdownHandlerFn } from "../common";
+import {
+  registerShutdownHandler,
+  RegisterShutdownHandlerFn,
+  ShutdownHandlerFn,
+} from "../common";
 import { ConsumeFromQueueCommand } from "./from-queue.command";
 
 const log = debug("amqp-prosumer:consumer");
@@ -40,28 +44,35 @@ export async function actionConsumeQueue(
   command: ConsumeFromQueueCommand,
   onMessage: ConsumeCallback = defOnMessage,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
-): Promise<void> {
-  log("Staring the consumer for queue", queueName);
+): Promise<ShutdownHandlerFn> {
+  return new Promise((resolve, reject) => {
+    log("Staring the consumer for queue", queueName);
 
-  // ToDo: Create a function to build these parameters
-  const qOpts = {
-    durable: command.durable,
-    autoDelete: command.autoDelete,
-    exclusive: command.exclusive,
-  };
+    // ToDo: Create a function to build these parameters
+    const qOpts = {
+      durable: command.durable,
+      autoDelete: command.autoDelete,
+      exclusive: command.exclusive,
+    };
 
-  connectToBroker(command.uri)
-    .then(createChannel)
-    .then(declareQueue(queueName, qOpts, command.assert))
-    .then(consume(onMessage))
-    .then((context) => {
-      regShutdown(async () => {
-        cancelConsumer(context)
-          .then(closeChannel)
-          .then(disconnectFromBroker)
-          .catch((err) => console.error("Error during shutdown", err));
+    connectToBroker(command.uri)
+      .then(createChannel)
+      .then(declareQueue(queueName, qOpts, command.assert))
+      .then(consume(onMessage))
+      .then((context) => {
+        log("Consumer started %s", context.consumerTag);
+        const handler = async (): Promise<void> => {
+          cancelConsumer(context)
+            .then(closeChannel)
+            .then(disconnectFromBroker)
+            .catch((err) => console.error("Error during shutdown", err));
+        };
+        regShutdown(handler);
+        resolve(handler);
+      })
+      .catch((err) => {
+        console.error("Error during queue consumption", err);
+        reject(err);
       });
-      return context;
-    })
-    .catch((err) => console.error(err));
+  });
 }

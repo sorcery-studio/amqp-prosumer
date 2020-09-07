@@ -38,8 +38,9 @@ export type CancelCallback = () => void;
 export async function connectToBroker(
   url: string
 ): Promise<amqplib.Connection> {
+  log("Connecting to broker %s", url);
   const connection = await amqplib.connect(url);
-  log("Connection to %s established", url);
+  log("Connection to broker %s established", url);
   return connection;
 }
 
@@ -51,6 +52,7 @@ export function disconnectFromBroker(connection: Connection): Promise<void> {
 export async function createChannel(
   connection: amqplib.Connection
 ): Promise<IConnectionContext> {
+  log("Creating new channel");
   const channel = await connection.createChannel();
   log("Channel created");
 
@@ -135,8 +137,8 @@ export function declareExchange(
   options: Options.AssertExchange,
   assert: boolean
 ): (context: IConnectionContext) => Promise<IConnectionContext> {
-  log("Declaring exchange %s", exchangeName);
   return async (context): Promise<IConnectionContext> => {
+    log("Declaring exchange %s", exchangeName);
     return {
       ...context,
       exchangeName: assert
@@ -188,6 +190,8 @@ export function consume(
       ...context,
       consumerTag: (
         await context.channel.consume(context.queueName, async (msg) => {
+          log("Consumer received a new message '%s'", msg?.content.toString());
+
           if (msg === null) {
             log(
               "The consumer was cancelled by the server, we should shut down now..."
@@ -197,7 +201,9 @@ export function consume(
             return;
           }
 
+          log("Invoking consumer callback");
           const result = await onMessage(msg);
+          log("Consumer callback invoked, result: %s", result);
 
           if (result === ConsumeResult.ACK) {
             context.channel.ack(msg);

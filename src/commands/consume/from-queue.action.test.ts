@@ -14,26 +14,24 @@ describe("Consume From Queue Action", () => {
       exclusive: false,
       uri: "amqp://localhost",
     };
-
     const conn = await amqp.connect("amqp://localhost");
     const ch = await conn.createConfirmChannel();
 
-    const stopConsume = await actionConsumeQueue(
+    const shutdown = await actionConsumeQueue(
       "test-queue",
       cmd as ConsumeFromQueueCommand,
       async (msg) => {
         expect(msg.content.toString()).toEqual("test-message");
-        await stopConsume();
+        await ch.waitForConfirms();
         await ch.close();
         await conn.close();
         done();
+        await shutdown();
 
         return ConsumeResult.ACK;
       }
     );
 
     ch.sendToQueue("test-queue", Buffer.from("test-message"));
-
-    await ch.waitForConfirms();
   });
 });

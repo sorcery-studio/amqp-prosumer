@@ -3,7 +3,7 @@ import * as amqp from "amqplib";
 import fs from "fs";
 import { actionConsumeExchange, defOnMessage } from "./from-exchange.action";
 import { ConsumeMessage } from "amqplib";
-import { channel, connection } from "../../__mocks__/amqplib";
+import { channel } from "../../__mocks__/amqplib";
 
 jest.mock("fs");
 jest.mock("amqplib");
@@ -23,7 +23,7 @@ describe("Consume From Exchange Action Unit Tests", () => {
       uri: "amqp://localhost",
     } as unknown) as Command;
 
-    const stopFn = await actionConsumeExchange(exchangeName, options);
+    await actionConsumeExchange(exchangeName, options);
 
     expect(amqp.connect).toBeCalledWith("amqp://localhost");
     expect(channel.assertQueue).toBeCalledWith("", {
@@ -44,14 +44,6 @@ describe("Consume From Exchange Action Unit Tests", () => {
     );
 
     expect(channel.consume).toBeCalledWith("test-queue", expect.any(Function));
-
-    expect(stopFn).toBeInstanceOf(Function);
-
-    await stopFn();
-
-    expect(channel.cancel).toBeCalledWith("test-consumer-tag");
-    expect(channel.close).toBeCalled();
-    expect(connection.close).toBeCalled();
   });
 
   test("it connects to the broker, asserts the exchange, queue and binds them", async () => {

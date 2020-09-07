@@ -20,22 +20,22 @@ describe("Consume From Exchange Action Integration Tests", () => {
 
     const onMessage: ConsumeCallback = async (msg) => {
       expect(msg.content.toString()).toEqual("test-message");
-      await stopConsume();
+      // Make sure that you got everything before you shut down
+      await ch.waitForConfirms();
       await ch.close();
       await conn.close();
       done();
+      await shutdown(); // It's not the case
 
       return ConsumeResult.ACK;
     };
 
-    const stopConsume = await actionConsumeExchange(
+    const shutdown = await actionConsumeExchange(
       "test-exchange",
       (cmd as unknown) as Command,
       onMessage
     );
 
     ch.publish("test-exchange", "", Buffer.from("test-message"));
-
-    await ch.waitForConfirms();
   });
 });

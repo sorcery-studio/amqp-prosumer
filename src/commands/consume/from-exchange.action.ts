@@ -14,7 +14,11 @@ import {
   declareExchange,
   bindQueueAndExchange,
 } from "../../utils/amqp-adapter";
-import { registerShutdownHandler, RegisterShutdownHandlerFn } from "../common";
+import {
+  registerShutdownHandler,
+  RegisterShutdownHandlerFn,
+  ShutdownHandlerFn,
+} from "../common";
 
 const log = debug("amqp-prosumer:consumer");
 
@@ -33,35 +37,40 @@ export async function actionConsumeExchange(
   command: Command,
   onMessage: ConsumeCallback = defOnMessage,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
-): Promise<void> {
-  log("Staring the consumer for exchange", exchangeName);
+): Promise<ShutdownHandlerFn> {
+  return new Promise((resolve, reject) => {
+    log("Staring the consumer for exchange", exchangeName);
 
-  const qOpts = {
-    autoDelete: true,
-    durable: false,
-    exclusive: true,
-  };
+    const qOpts = {
+      autoDelete: true,
+      durable: false,
+      exclusive: true,
+    };
 
-  const exOpts = {
-    durable: command.durable,
-    autoDelete: command.autoDelete,
-  };
+    const exOpts = {
+      durable: command.durable,
+      autoDelete: command.autoDelete,
+    };
 
-  connectToBroker(command.uri)
-    .then(createChannel)
-    .then(declareQueue("", qOpts, true))
-    .then(declareExchange(exchangeName, "topic", exOpts, command.assert))
-    .then(bindQueueAndExchange("#"))
-    .then(consume(onMessage))
-    .then((context) => {
-      const shutdown = async (): Promise<void> => {
-        cancelConsumer(context)
-          .then(closeChannel)
-          .then(disconnectFromBroker)
-          .catch((err) => console.error("Error during shutdown", err));
-      };
-      regShutdown(shutdown);
-      return context;
-    })
-    .catch((err) => console.error(err));
+    connectToBroker(command.uri)
+      .then(createChannel)
+      .then(declareQueue("", qOpts, true))
+      .then(declareExchange(exchangeName, "topic", exOpts, command.assert))
+      .then(bindQueueAndExchange("#"))
+      .then(consume(onMessage))
+      .then((context) => {
+        const shutdown = async (): Promise<void> => {
+          cancelConsumer(context)
+            .then(closeChannel)
+            .then(disconnectFromBroker)
+            .catch((err) => console.error("Error during shutdown", err));
+        };
+        regShutdown(shutdown);
+        resolve(shutdown);
+      })
+      .catch((err) => {
+        console.error(err);
+        reject(err);
+      });
+  });
 }
