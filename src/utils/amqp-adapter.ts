@@ -46,6 +46,7 @@ export function createDefaultChannelEventListeners(
       log("Received Channel#close() with error", serverError);
     }
   };
+
   const onError = (err: Error | string): void => {
     log("Channel#error()", err);
   };
@@ -228,10 +229,6 @@ export function wrapMessageHandler(
     } finally {
       channel.ack(msg);
     }
-
-    // if (result === ConsumeResult.ACK) {
-
-    // }
   };
 }
 
