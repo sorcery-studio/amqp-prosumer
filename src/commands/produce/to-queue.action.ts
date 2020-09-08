@@ -37,7 +37,7 @@ export async function actionProduceQueue(
 
     // Generators, can't go over this, fnReadInput can be provided from outside!
     for (const message of fnReadInput()) {
-      await sendToQueue(context.channel, context.queueName, message);
+      await sendToQueue(context, message);
     }
 
     return context;

@@ -1,20 +1,44 @@
 import {
   bindQueueAndExchange,
+  cancelConsumer,
   closeChannel,
   connectToBroker,
   consume,
+  ConsumeResult,
   createChannel,
+  createDefaultChannelEventListeners,
   declareExchange,
   declareQueue,
   disconnectFromBroker,
+  IConnectionContext,
   publish,
+  sendToQueue,
+  wrapMessageHandler,
 } from "./amqp-adapter";
 import * as amqp from "amqplib";
-import { Channel, Connection } from "amqplib";
+import { Channel, Connection, ConsumeMessage } from "amqplib";
+import { mock, MockProxy } from "jest-mock-extended";
 
-import { mock } from "jest-mock-extended";
+interface MockedIConnectionContext extends IConnectionContext {
+  channel: MockProxy<Channel>;
+  connection: MockProxy<Connection>;
+}
+
+function getCtx(
+  ext: Partial<MockedIConnectionContext> = {}
+): MockedIConnectionContext {
+  return {
+    channel: mock<Channel>(),
+    connection: mock<Connection>(),
+    ...ext,
+  };
+}
 
 describe("AMQP FP Adapter", () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   describe("Connect to broker function", () => {
     test("It establishes the connection and returns it", async () => {
       const mockConnection = mock<Connection>();
@@ -70,10 +94,7 @@ describe("AMQP FP Adapter", () => {
 
   describe("Close channel", () => {
     test("It calls the close on the channel and returns the connection", async () => {
-      const ctx = {
-        channel: mock<Channel>(),
-        connection: mock<Connection>(),
-      };
+      const ctx = getCtx();
 
       const conn = await closeChannel(ctx);
 
@@ -88,10 +109,7 @@ describe("AMQP FP Adapter", () => {
       const qOpts = { durable: true };
       const assert = false;
 
-      const ctx = {
-        channel: mock<Channel>(),
-        connection: mock<Connection>(),
-      };
+      const ctx = getCtx();
 
       const queueCreator = declareQueue(qName, qOpts, assert);
       const qCtx = await queueCreator(ctx);
@@ -107,10 +125,7 @@ describe("AMQP FP Adapter", () => {
       const qOpts = { durable: true };
       const assert = true;
 
-      const ctx = {
-        channel: mock<Channel>(),
-        connection: mock<Connection>(),
-      };
+      const ctx = getCtx();
 
       ctx.channel.assertQueue.mockResolvedValueOnce({
         queue: qAssertedName,
@@ -134,10 +149,7 @@ describe("AMQP FP Adapter", () => {
       const exType = "topic";
       const assert = false;
 
-      const ctx = {
-        channel: mock<Channel>(),
-        connection: mock<Connection>(),
-      };
+      const ctx = getCtx();
 
       const exCreator = declareExchange(exName, exType, exOpts, assert);
       const exCtx = await exCreator(ctx);
@@ -155,10 +167,7 @@ describe("AMQP FP Adapter", () => {
       const exOpts = { durable: true };
       const assert = true;
 
-      const ctx = {
-        channel: mock<Channel>(),
-        connection: mock<Connection>(),
-      };
+      const ctx = getCtx();
 
       ctx.channel.assertExchange.mockResolvedValueOnce({
         exchange: exAssertedName,
@@ -179,12 +188,10 @@ describe("AMQP FP Adapter", () => {
 
   describe("Bind queue and exchange function", () => {
     test("It binds the queue and exchange present in the context", async () => {
-      const correctCtx = {
-        connection: mock<Connection>(),
-        channel: mock<Channel>(),
+      const correctCtx = getCtx({
         queueName: "test-queue",
         exchangeName: "test-exchange",
-      };
+      });
 
       const binder = bindQueueAndExchange();
 
@@ -202,12 +209,10 @@ describe("AMQP FP Adapter", () => {
     test.each(["queueName", "exchangeName"])(
       "It throws an exception when the context is missing %s property",
       async (undefProp) => {
-        const correctCtx = {
-          connection: mock<Connection>(),
-          channel: mock<Channel>(),
+        const correctCtx = getCtx({
           queueName: "test-queue",
           exchangeName: "test-exchange",
-        };
+        });
 
         const binder = bindQueueAndExchange();
 
@@ -226,7 +231,7 @@ describe("AMQP FP Adapter", () => {
   });
 
   describe("Consume function", () => {
-    test("It returns a consumer context ", async () => {
+    test("It returns a consumer context - containing the consumer tag, uses provided onMessage function", async () => {
       const qName = "test-queue-name";
 
       const ctx = {
@@ -240,37 +245,93 @@ describe("AMQP FP Adapter", () => {
       });
 
       const onMessage = jest.fn();
-      const consumerFn = consume(onMessage);
+      const wrapResult = jest.fn();
+      const testWrapper = jest.fn().mockReturnValue(wrapResult);
+      const startConsumer = consume(onMessage, testWrapper);
 
-      const consContext = await consumerFn(ctx);
+      // Start the consumer
+      const consContext = await startConsumer(ctx);
 
       expect(consContext.consumerTag).toEqual("test-consumer-tag");
+      expect(onMessage).not.toBeCalled();
+      expect(testWrapper).toBeCalledWith(consContext.channel, onMessage);
+      expect(consContext.channel.consume).toBeCalledWith(qName, wrapResult);
     });
-    test.todo(
-      "It calls the 'onMessage' callback for the message which comes in - calls .ack on success"
-    );
-    test.todo(
-      "It handles the consumer cancel scenario by calling the 'onCancel' callback"
-    );
-    test.todo(
-      "Throws an error when the connection context does not contain a queue to consume"
-    );
-    test.todo(
-      "It gracefully handles the situation, when the 'onCancel' throws"
-    );
-    test.todo(
-      "It gracefully handles the situation, when the 'onMessage' throws"
-    );
+
+    test("Throws an error when the connection context does not contain a queue to consume", async () => {
+      const ctx = {
+        channel: mock<Channel>(),
+        connection: mock<Connection>(),
+      };
+
+      const onMessage = jest.fn();
+      const wrapResult = jest.fn();
+      const testWrapper = jest.fn().mockReturnValue(wrapResult);
+      const startConsumer = consume(onMessage, testWrapper);
+
+      // Start the consumer
+      await expect(startConsumer(ctx)).rejects.toThrow("Missing queue name");
+
+      expect(onMessage).not.toBeCalled();
+      expect(testWrapper).not.toBeCalled();
+      expect(ctx.channel.consume).not.toBeCalled();
+    });
+  });
+
+  describe("Wrap message handler function", () => {
+    test("It calls the message handler when it's a correct message and ACKs it from the broker", async () => {
+      const onMessage = jest.fn().mockReturnValue(ConsumeResult.ACK);
+      const channel = mock<Channel>();
+
+      const wrapped = wrapMessageHandler(channel, onMessage);
+
+      // ToDo: Investigate
+      //  PrettyFormatPluginError: tagName.includes is not a function
+      //  TypeError: tagName.includes is not a function
+      const msg = mock<ConsumeMessage>();
+      await wrapped(msg);
+
+      expect(onMessage).toBeCalledWith(msg);
+      expect(channel.ack).toBeCalledWith(msg);
+    });
+
+    test("It does not call the original handler when the consumer is cancelled", async () => {
+      const onMessage = jest.fn().mockReturnValue(ConsumeResult.ACK);
+      const channel = mock<Channel>();
+
+      const wrapped = wrapMessageHandler(channel, onMessage);
+
+      await wrapped(null);
+
+      expect(onMessage).not.toBeCalled();
+      expect(channel.ack).not.toBeCalled();
+    });
+
+    test("It handles the situation when the message handler throws an error - still acks the message", async () => {
+      const onMessage = jest
+        .fn()
+        .mockRejectedValue(new Error("Internal Error"));
+      const channel = mock<Channel>();
+
+      const wrapped = wrapMessageHandler(channel, onMessage);
+
+      const msg = mock<ConsumeMessage>();
+      await expect(wrapped(msg)).rejects.toThrow("Internal Error");
+
+      expect(onMessage).toBeCalledWith(msg);
+      // ToDo: Investigate
+      //  PrettyFormatPluginError: tagName.includes is not a function
+      //  TypeError: tagName.includes is not a function
+      expect(channel.ack).toBeCalledWith(msg);
+    });
   });
 
   describe("Publish function", () => {
     test("Publishes the message to the exchange passed in the context", async () => {
-      const correctCtx = {
-        connection: mock<Connection>(),
-        channel: mock<Channel>(),
+      const correctCtx = getCtx({
         queueName: "test-queue",
         exchangeName: "test-exchange",
-      };
+      });
 
       correctCtx.channel.publish.mockReturnValue(true);
 
@@ -287,12 +348,10 @@ describe("AMQP FP Adapter", () => {
     });
 
     test("Publishes the message to the exchange passed in the context and awaits if publish returns false", async () => {
-      const correctCtx = {
-        connection: mock<Connection>(),
-        channel: mock<Channel>(),
+      const correctCtx = getCtx({
         queueName: "test-queue",
         exchangeName: "test-exchange",
-      };
+      });
 
       correctCtx.channel.once.mockImplementation((_event, fn) => {
         fn();
@@ -315,12 +374,10 @@ describe("AMQP FP Adapter", () => {
     });
 
     test("Throws Error when the exchange name is missing in the context", async () => {
-      const brokenContext = {
-        connection: mock<Connection>(),
-        channel: mock<Channel>(),
+      const brokenContext = getCtx({
         queueName: "test-queue",
         exchangeName: undefined,
-      };
+      });
 
       const msg = "test-message";
 
@@ -329,6 +386,122 @@ describe("AMQP FP Adapter", () => {
       );
 
       expect(brokenContext.channel.publish).not.toBeCalled();
+    });
+  });
+
+  describe("Send to queue function", () => {
+    test("It sends the message to the queue passed in the context", async () => {
+      const ctx = getCtx({
+        queueName: "test-queue-name",
+      });
+      const message = "test-message";
+
+      ctx.channel.sendToQueue.mockReturnValue(true);
+
+      const ret = await sendToQueue(ctx, message);
+
+      expect(ctx.channel.sendToQueue).toBeCalledWith(
+        "test-queue-name",
+        expect.any(Buffer)
+      );
+      expect(ret).toBe(ctx);
+    });
+
+    test("It sends the message to the queue and respects awaits if sending returns false", async () => {
+      const ctx = getCtx({
+        queueName: "test-queue-name",
+      });
+      const message = "test-message";
+
+      ctx.channel.once.mockImplementation((_event, fn) => {
+        fn();
+        return ctx.channel;
+      });
+      ctx.channel.sendToQueue.mockReturnValue(false);
+
+      const ret = await sendToQueue(ctx, message);
+
+      expect(ctx.channel.sendToQueue).toBeCalledWith(
+        "test-queue-name",
+        expect.any(Buffer)
+      );
+      expect(ret).toBe(ctx);
+    });
+
+    test("It throws Error when the queue name is not provided", async () => {
+      const ctx = getCtx({
+        queueName: undefined,
+      });
+      const message = "test-message";
+
+      ctx.channel.sendToQueue.mockReturnValue(true);
+
+      await expect(sendToQueue(ctx, message)).rejects.toThrow(
+        "Missing queue name"
+      );
+
+      expect(ctx.channel.sendToQueue).not.toBeCalled();
+    });
+  });
+
+  describe("Cancel consumer function", () => {
+    test("It calls out cancel on the channel and returns the connection object for chaining", async () => {
+      const ctx = {
+        ...getCtx(),
+        consumerTag: "example-consumer-tag",
+      };
+      const ret = await cancelConsumer(ctx);
+
+      expect(ctx.channel.cancel).toBeCalledWith(ctx.consumerTag);
+      expect(ret).toBe(ctx);
+    });
+  });
+
+  describe("Default channel event listeners", () => {
+    const mockLog = jest.fn();
+
+    const listeners = createDefaultChannelEventListeners(mockLog);
+
+    test("onClose logs the information", () => {
+      listeners["close"]();
+      expect(mockLog).toBeCalledWith("Channel#close()");
+    });
+
+    test("onClose logs the information if the server error was passed", () => {
+      const err = new Error("Some server error");
+      listeners["close"](err);
+      expect(mockLog).toBeCalledWith("Channel#close()");
+      expect(mockLog).toBeCalledWith(
+        "Received Channel#close() with error",
+        err
+      );
+    });
+
+    test("onError logs the error", () => {
+      const err = new Error("Example error");
+      listeners["error"](err);
+      expect(mockLog).toBeCalledWith("Channel#error()", err);
+    });
+
+    test("onReturn logs the information about returned message", () => {
+      const msg = mock<ConsumeMessage>();
+      listeners["return"](msg);
+      expect(mockLog).toBeCalledWith("Channel#return()", msg);
+    });
+
+    test("onDrain logs the information about the event", () => {
+      listeners["drain"]();
+      expect(mockLog).toBeCalledWith("Channel#drain()");
+    });
+
+    test("onBlocked logs the information about the event", () => {
+      listeners["blocked"]("reason");
+      expect(mockLog).toBeCalledWith("Channel#blocked()", "reason");
+    });
+
+    test("onUnblocked logs the information about the event", () => {
+      listeners["unblocked"]("reason");
+      expect(mockLog).toBeCalledWith("Channel#unblocked()", "reason");
     });
   });
 });

@@ -34,6 +34,47 @@ export interface IConsumerContext extends IConnectionContext {
  */
 export type ConsumeCallback = (msg: ConsumeMessage) => Promise<ConsumeResult>;
 export type CancelCallback = () => void;
+type AnyFunction = (...args: any[]) => any;
+
+export function createDefaultChannelEventListeners(
+  log: AnyFunction
+): Record<string, AnyFunction> {
+  const onClose = (serverError?: Error | string): void => {
+    log("Channel#close()");
+
+    if (serverError) {
+      log("Received Channel#close() with error", serverError);
+    }
+  };
+  const onError = (err: Error | string): void => {
+    log("Channel#error()", err);
+  };
+
+  const onReturn = (msg: ConsumeMessage): void => {
+    log("Channel#return()", msg);
+  };
+
+  const onDrain = (): void => {
+    log("Channel#drain()");
+  };
+
+  const onBlocked = (reason: string): void => {
+    log("Channel#blocked()", reason);
+  };
+
+  const onUnblocked = (reason: string): void => {
+    log("Channel#unblocked()", reason);
+  };
+
+  return {
+    close: onClose,
+    error: onError,
+    return: onReturn,
+    drain: onDrain,
+    blocked: onBlocked,
+    unblocked: onUnblocked,
+  };
+}
 
 export async function connectToBroker(
   url: string
@@ -50,42 +91,20 @@ export function disconnectFromBroker(connection: Connection): Promise<void> {
 }
 
 export async function createChannel(
-  connection: amqplib.Connection
+  connection: amqplib.Connection,
+  eventListeners: Record<string, AnyFunction> = {}
 ): Promise<IConnectionContext> {
   log("Creating new channel");
   const channel = await connection.createChannel();
   log("Channel created");
 
-  channel.on("close", (serverError?) => {
-    log("Channel#close()");
+  const defaultListeners = createDefaultChannelEventListeners(log);
 
-    if (serverError) {
-      log("Received Channel#close() with error", serverError);
-    }
-  });
-
-  channel.on("error", (err) => {
-    // ToDo: How will you tell the user?
-    log("Channel#error()", err);
-  });
-
-  channel.on("return", (msg) => {
-    // ToDo: How will you tell the user?
-    log("Channel#return()", msg);
-  });
-
-  channel.on("drain", () => {
-    log("Channel#drain()");
-  });
-
-  channel.on("blocked", (reason) => {
-    // ToDo: How will you tell the user?
-    log("Channel#blocked()", reason);
-  });
-
-  channel.on("unblocked", (reason) => {
-    // ToDo: How will you tell the user?
-    log("Channel#unblocked()", reason);
+  Object.entries({
+    ...defaultListeners,
+    ...eventListeners,
+  }).forEach(([event, listener]) => {
+    channel.on(event, listener);
   });
 
   return {
@@ -176,8 +195,53 @@ export function bindQueueAndExchange(
   };
 }
 
+type AmqpLibOnMessageFn = (msg: ConsumeMessage | null) => any;
+
+export function wrapMessageHandler(
+  channel: Channel,
+  handleMessage: ConsumeCallback
+): AmqpLibOnMessageFn {
+  return async (msg): Promise<void> => {
+    log("Consumer received a new message '%s'", msg?.content.toString());
+
+    if (msg === null) {
+      log(
+        "The consumer was cancelled by the server, we should shut down now..."
+      );
+
+      // await onCancel();
+      return;
+    }
+
+    try {
+      log("Invoking consumer callback");
+      const result = await handleMessage(msg);
+      log("Consumer callback invoked, result: %s", result);
+    } catch (err) {
+      log(
+        "Consumer callback failed with error: %s - %s",
+        err.name,
+        err.message
+      );
+
+      throw err;
+    } finally {
+      channel.ack(msg);
+    }
+
+    // if (result === ConsumeResult.ACK) {
+
+    // }
+  };
+}
+
+/**
+ * @param handleMessage The function which will be provided with a legitimate message when one arrives (business logic)
+ * @param callbackWrapper The wrapper function which implements the logic around the handleMessage function (infrastructure logic)
+ */
 export function consume(
-  onMessage: ConsumeCallback
+  handleMessage: ConsumeCallback,
+  callbackWrapper = wrapMessageHandler
 ): (context: IConnectionContext) => Promise<IConsumerContext> {
   return async (context): Promise<IConsumerContext> => {
     if (!context.queueName) {
@@ -189,26 +253,10 @@ export function consume(
     return {
       ...context,
       consumerTag: (
-        await context.channel.consume(context.queueName, async (msg) => {
-          log("Consumer received a new message '%s'", msg?.content.toString());
-
-          if (msg === null) {
-            log(
-              "The consumer was cancelled by the server, we should shut down now..."
-            );
-
-            // await onCancel();
-            return;
-          }
-
-          log("Invoking consumer callback");
-          const result = await onMessage(msg);
-          log("Consumer callback invoked, result: %s", result);
-
-          if (result === ConsumeResult.ACK) {
-            context.channel.ack(msg);
-          }
-        })
+        await context.channel.consume(
+          context.queueName,
+          callbackWrapper(context.channel, handleMessage)
+        )
       ).consumerTag,
     };
   };
@@ -225,22 +273,30 @@ export async function cancelConsumer(
 }
 
 export async function sendToQueue(
-  channel: Channel,
-  queueName: string,
+  context: IConnectionContext,
   message: string
-): Promise<void> {
+): Promise<IConnectionContext> {
   log("Sending message to queue: %s", message);
+
+  const { channel, queueName } = context;
+
+  if (!queueName) {
+    throw new Error("Missing queue name");
+  }
 
   const keepSending = channel.sendToQueue(queueName, Buffer.from(message));
 
   if (!keepSending) {
     await waitForDrain(channel);
   }
+
+  return context;
 }
 
 export async function publish(
   context: IConnectionContext,
-  message: string
+  message: string,
+  routingKey = ""
 ): Promise<IConnectionContext> {
   log("Publishing message to an exchange: %s", message);
 
@@ -250,7 +306,7 @@ export async function publish(
 
   const keepSending = await context.channel.publish(
     context.exchangeName,
-    "", // ToDo: Provide possibility to pass through 2nd parameter
+    routingKey,
     Buffer.from(message)
   );
 
