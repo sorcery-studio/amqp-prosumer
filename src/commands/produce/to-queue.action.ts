@@ -43,7 +43,7 @@ export async function actionProduceQueue(
     return context;
   }
 
-  connectToBroker(options.uri)
+  connectToBroker(options.url)
     .then(createChannel)
     .then(declareQueue(queueName, queueOptions, options.assert))
     .then(readAndSendInput)

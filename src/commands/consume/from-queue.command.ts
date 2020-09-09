@@ -3,7 +3,7 @@ import { actionConsumeQueue } from "./from-queue.action";
 import { reportErrorAndExit } from "../common";
 
 export interface ConsumeFromQueueCommand extends Command {
-  uri: string;
+  url: string;
   queueName: string;
   assert: boolean;
   exclusive: boolean;
@@ -15,7 +15,7 @@ export function buildConsumeFromQueueCommand(): ConsumeFromQueueCommand {
   return program
     .command("from-queue <queueName>")
     .option(
-      "-u, --uri <uri>",
+      "-u, --url <url>",
       "The URL to the RabbitMQ instance",
       "amqp://localhost"
     )

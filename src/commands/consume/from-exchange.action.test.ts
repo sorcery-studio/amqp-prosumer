@@ -20,7 +20,7 @@ describe("Consume From Exchange Action Unit Tests", () => {
       autoDelete: true,
       durable: false,
       exclusive: false,
-      uri: "amqp://localhost",
+      url: "amqp://localhost",
     } as unknown) as Command;
 
     await actionConsumeExchange(exchangeName, options);
@@ -53,7 +53,7 @@ describe("Consume From Exchange Action Unit Tests", () => {
       autoDelete: true,
       durable: false,
       exclusive: false,
-      uri: "amqp://localhost",
+      url: "amqp://localhost",
     } as unknown) as Command;
 
     await actionConsumeExchange(exchangeName, options);

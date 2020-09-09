@@ -36,7 +36,7 @@ export async function actionProduceExchange(
     return context;
   };
 
-  connectToBroker(options.uri)
+  connectToBroker(options.url)
     .then(createChannel)
     .then(
       declareExchange(exchangeName, "topic", exchangeOptions, options.assert)

@@ -3,9 +3,9 @@ import { buildConsumeFromExchangeCommand } from "./from-exchange.command";
 describe("Consume From Exchange Command", () => {
   const command = buildConsumeFromExchangeCommand();
 
-  test("it defines the 'uri' option, default 'amqp://localhost'", () => {
-    expect(Object.keys(command.opts())).toContain("uri");
-    expect(command.uri).toEqual("amqp://localhost");
+  test("it defines the 'url' option, default 'amqp://localhost'", () => {
+    expect(Object.keys(command.opts())).toContain("url");
+    expect(command.url).toEqual("amqp://localhost");
   });
 
   test("it allows to perform an assertion of a exchange", () => {

@@ -36,7 +36,7 @@
 
 ### Changed
 
-* The messages taken from the input are now sent in an unmodified form (previously they were JSON-encoded before being sent).
+* The messages taken from the input will be sent in an unmodified form (previously they were JSON-encoded before being sent).
 * The consumer function does no longer trim `"` from the start and end of the received message.
 
 ## [0.2.3] - 2020-06-29

@@ -52,7 +52,7 @@ export async function actionConsumeExchange(
       autoDelete: command.autoDelete,
     };
 
-    connectToBroker(command.uri)
+    connectToBroker(command.url)
       .then(createChannel)
       .then(declareQueue("", qOpts, true))
       .then(declareExchange(exchangeName, "topic", exOpts, command.assert))
@@ -63,7 +63,7 @@ export async function actionConsumeExchange(
           cancelConsumer(context)
             .then(closeChannel)
             .then(disconnectFromBroker)
-            .catch((err) => console.error("Error during shutdown", err));
+            .catch((err) => console.error("Error durlng shutdown", err));
         };
         regShutdown(shutdown);
         resolve(shutdown);

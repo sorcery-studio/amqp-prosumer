@@ -3,7 +3,7 @@ import { actionConsumeExchange } from "./from-exchange.action";
 import { reportErrorAndExit } from "../common";
 
 export interface ConsumeFromExchangeCommand extends Command {
-  uri: string;
+  url: string;
   exchangeName: string;
   assert: boolean;
   durable: boolean;
@@ -13,7 +13,7 @@ export function buildConsumeFromExchangeCommand(): ConsumeFromExchangeCommand {
   return program
     .command("from-exchange <exchangeName>")
     .option(
-      "-u, --uri <uri>",
+      "-u, --url <url>",
       "The URL to the RabbitMQ instance",
       "amqp://localhost"
     )

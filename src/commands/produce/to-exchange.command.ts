@@ -6,7 +6,7 @@ export function buildProduceToExchangeCommand(): Command {
   const produce = program
     .command("to-exchange <name>")
     .option(
-      "-u, --uri <uri>",
+      "-u, --url <url>",
       "The URL to the RabbitMQ instance",
       "amqp://localhost"
     )

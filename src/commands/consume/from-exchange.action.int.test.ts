@@ -12,7 +12,7 @@ describe("Consume From Exchange Action Integration Tests", () => {
       autoDelete: true,
       durable: false,
       exclusive: false,
-      uri: "amqp://localhost",
+      url: "amqp://localhost",
     };
 
     const conn = await amqp.connect("amqp://localhost");

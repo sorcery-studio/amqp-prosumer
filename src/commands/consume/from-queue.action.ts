@@ -55,7 +55,7 @@ export async function actionConsumeQueue(
       exclusive: command.exclusive,
     };
 
-    connectToBroker(command.uri)
+    connectToBroker(command.url)
       .then(createChannel)
       .then(declareQueue(queueName, qOpts, command.assert))
       .then(consume(onMessage))
@@ -65,13 +65,13 @@ export async function actionConsumeQueue(
           cancelConsumer(context)
             .then(closeChannel)
             .then(disconnectFromBroker)
-            .catch((err) => console.error("Error during shutdown", err));
+            .catch((err) => console.error("Error durlng shutdown", err));
         };
         regShutdown(handler);
         resolve(handler);
       })
       .catch((err) => {
-        console.error("Error during queue consumption", err);
+        console.error("Error durlng queue consumption", err);
         reject(err);
       });
   });

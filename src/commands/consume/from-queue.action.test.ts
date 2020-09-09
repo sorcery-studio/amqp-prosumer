@@ -12,7 +12,7 @@ describe("Consume From Queue Action", () => {
       autoDelete: true,
       durable: false,
       exclusive: false,
-      uri: "amqp://localhost",
+      url: "amqp://localhost",
     };
     const conn = await amqp.connect("amqp://localhost");
     const ch = await conn.createConfirmChannel();
