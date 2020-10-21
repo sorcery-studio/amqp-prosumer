@@ -39,16 +39,14 @@ describe("Produce To Exchange Action", () => {
       done();
     });
 
-    const inputProvider: InputReaderGen = function* () {
+    const readInput: InputReaderGen = function* () {
       yield "test-message";
     };
 
-    const result = actionProduceExchange(
+    await actionProduceExchange(
       "test-exchange-producer",
       (cmd as unknown) as Command,
-      inputProvider
+      readInput
     );
-
-    expect(result).toBeTruthy();
   });
 });

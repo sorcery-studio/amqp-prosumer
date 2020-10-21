@@ -9,44 +9,51 @@ import {
   IConnectionContext,
   sendToQueue,
 } from "../../utils/amqp-adapter";
-import { InputReaderGen, readInputFile } from "../../utils/io";
+import { readInputFile } from "../../utils/io";
+import { Options } from "amqplib";
 
 const logger = debug("amqp-prosumer:producer");
 
+function buildQueueOptionsFrom(command: Command): Options.AssertQueue {
+  return {
+    durable: command.durable,
+    autoDelete: command.autoDelete,
+  };
+}
+
 export async function actionProduceQueue(
   queueName: string,
-  options: Command,
-  fnReadInput: InputReaderGen = readInputFile,
+  command: Command,
+  readInput = readInputFile,
+  sendOutput = sendToQueue,
   log: Debugger = logger
 ): Promise<void> {
   log("Staring the producer action");
 
-  // Form of composition
+  const setupQueue = declareQueue(
+    queueName,
+    buildQueueOptionsFrom(command),
+    command.assert
+  );
 
-  const queueOptions = {
-    durable: options.durable,
-    autoDelete: options.autoDelete,
-  };
-
-  async function readAndSendInput(
+  const sendMessages = async (
     context: IConnectionContext
-  ): Promise<IConnectionContext> {
+  ): Promise<IConnectionContext> => {
     if (!context.queueName) {
       throw new Error("Can't send to queue if the the name is not defined");
     }
 
-    // Generators, can't go over this, fnReadInput can be provided from outside!
-    for (const message of fnReadInput()) {
-      await sendToQueue(context, message);
+    for (const message of readInput()) {
+      await sendOutput(context, message);
     }
 
     return context;
-  }
+  };
 
-  connectToBroker(options.url)
+  connectToBroker(command.url)
     .then(createChannel)
-    .then(declareQueue(queueName, queueOptions, options.assert))
-    .then(readAndSendInput)
+    .then(setupQueue)
+    .then(sendMessages)
     .then(closeChannel)
     .then(disconnectFromBroker)
     .then(() => log("Produce action executed successfully"))

@@ -2,16 +2,7 @@ import { Command, program } from "commander";
 import { actionConsumeQueue } from "./from-queue.action";
 import { reportErrorAndExit } from "../common";
 
-export interface ConsumeFromQueueCommand extends Command {
-  url: string;
-  queueName: string;
-  assert: boolean;
-  exclusive: boolean;
-  durable: boolean;
-  autoDelete: boolean;
-}
-
-export function buildConsumeFromQueueCommand(): ConsumeFromQueueCommand {
+export function buildConsumeFromQueueCommand(): Command {
   return program
     .command("from-queue <queueName>")
     .option(
@@ -39,7 +30,7 @@ export function buildConsumeFromQueueCommand(): ConsumeFromQueueCommand {
       "Mark the resulting queue for automatic delete when if there will be no consumers",
       true
     )
-    .action((queueName: string, options: ConsumeFromQueueCommand) => {
+    .action((queueName: string, options: Command) => {
       actionConsumeQueue(queueName, options).catch(reportErrorAndExit);
-    }) as ConsumeFromQueueCommand;
+    }) as Command;
 }

@@ -134,6 +134,8 @@ export async function closeChannel(
  * @param queueName
  * @param queueOptions
  * @param assert
+ *
+ * @returns Function which will assert the queue on the broker (if required), or simply will return the queue name
  */
 export function declareQueue(
   queueName: string,

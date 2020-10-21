@@ -1,7 +1,7 @@
 import * as amqp from "amqplib";
 import { actionConsumeQueue } from "./from-queue.action";
-import { ConsumeFromQueueCommand } from "./from-queue.command";
 import { ConsumeResult } from "../../utils/amqp-adapter";
+import { Command } from "commander";
 
 jest.unmock("amqplib");
 
@@ -19,7 +19,7 @@ describe("Consume From Queue Action", () => {
 
     const shutdown = await actionConsumeQueue(
       "test-queue",
-      cmd as ConsumeFromQueueCommand,
+      (cmd as unknown) as Command,
       async (msg) => {
         expect(msg.content.toString()).toEqual("test-message");
         await ch.waitForConfirms();

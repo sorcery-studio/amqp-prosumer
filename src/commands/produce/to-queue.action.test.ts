@@ -32,16 +32,14 @@ describe("Produce To Queue Action", () => {
       done();
     });
 
-    const inputProvider: InputReaderGen = function* () {
+    const readInput: InputReaderGen = function* () {
       yield "test-message";
     };
 
-    const result = actionProduceQueue(
+    await actionProduceQueue(
       "test-queue-producer",
       (cmd as unknown) as Command,
-      inputProvider
+      readInput
     );
-
-    expect(result).toBeTruthy();
   });
 });

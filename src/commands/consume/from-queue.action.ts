@@ -1,33 +1,34 @@
 import { debug } from "debug";
-import fs from "fs";
+import { Command } from "commander";
 import {
   cancelConsumer,
   closeChannel,
   connectToBroker,
   consume,
   ConsumeCallback,
-  ConsumeResult,
   createChannel,
   declareQueue,
   disconnectFromBroker,
+  IConsumerContext,
 } from "../../utils/amqp-adapter";
 import {
   registerShutdownHandler,
   RegisterShutdownHandlerFn,
   ShutdownHandlerFn,
 } from "../common";
-import { ConsumeFromQueueCommand } from "./from-queue.command";
+import { writeMessageToFile } from "./output-writer";
+import { Options } from "amqplib";
 
 const log = debug("amqp-prosumer:consumer");
 
-export const defOnMessage: ConsumeCallback = async (msg) => {
-  const write = msg.content.toString("utf-8");
-  log("Consuming message", write);
-
-  fs.writeFileSync(1, write + "\n");
-
-  return ConsumeResult.ACK;
-};
+/** TODO: Remove duplicate? */
+function buildQueueOptionsFrom(command: Command): Options.AssertQueue {
+  return {
+    durable: command.durable,
+    autoDelete: command.autoDelete,
+    exclusive: command.exclusive,
+  };
+}
 
 /**
  * Starts the consumer action and returns the shutdown function
@@ -41,37 +42,34 @@ export const defOnMessage: ConsumeCallback = async (msg) => {
  */
 export async function actionConsumeQueue(
   queueName: string,
-  command: ConsumeFromQueueCommand,
-  onMessage: ConsumeCallback = defOnMessage,
+  command: Command,
+  onMessage: ConsumeCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {
     log("Staring the consumer for queue", queueName);
 
-    // ToDo: Create a function to build these parameters
-    const qOpts = {
-      durable: command.durable,
-      autoDelete: command.autoDelete,
-      exclusive: command.exclusive,
+    const registerConsumerShutdown = (context: IConsumerContext): void => {
+      log("Consumer started %s", context.consumerTag);
+      const handler = async (): Promise<void> => {
+        cancelConsumer(context)
+          .then(closeChannel)
+          .then(disconnectFromBroker)
+          .catch((err) => console.error("Error during shutdown", err));
+      };
+      regShutdown(handler);
+      resolve(handler);
     };
 
     connectToBroker(command.url)
       .then(createChannel)
-      .then(declareQueue(queueName, qOpts, command.assert))
-      .then(consume(onMessage))
-      .then((context) => {
-        log("Consumer started %s", context.consumerTag);
-        const handler = async (): Promise<void> => {
-          cancelConsumer(context)
-            .then(closeChannel)
-            .then(disconnectFromBroker)
-            .catch((err) => console.error("Error durlng shutdown", err));
-        };
-        regShutdown(handler);
-        resolve(handler);
-      })
+      .then(
+        declareQueue(queueName, buildQueueOptionsFrom(command), command.assert)
+      )
+      .then(consume(onMessage)) // Note: OnMessage could actually be done on rxjs, but that's not the goal of the project
+      .then(registerConsumerShutdown)
       .catch((err) => {
-        console.error("Error durlng queue consumption", err);
+        console.error("Error during queue consumption", err);
         reject(err);
       });
   });

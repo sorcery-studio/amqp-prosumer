@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { debug, Debugger } from "debug";
-import { InputReaderGen, readInputFile } from "../../utils/io";
+import { readInputFile } from "../../utils/io";
 import {
   closeChannel,
   connectToBroker,
@@ -10,38 +10,49 @@ import {
   IConnectionContext,
   publish,
 } from "../../utils/amqp-adapter";
+import { Options } from "amqplib";
 
 const logger = debug("amqp-prosumer:producer");
 
+function buildExchangeOptionsFrom(command: Command): Options.AssertExchange {
+  return {
+    durable: command.durable,
+    autoDelete: command.autoDelete,
+  };
+}
+
 export async function actionProduceExchange(
   exchangeName: string,
-  options: Command,
-  fnReadInput: InputReaderGen = readInputFile,
+  command: Command,
+  readInput = readInputFile,
+  sendOutput = publish,
   log: Debugger = logger
 ): Promise<void> {
   log("Staring the producer action");
 
-  const exchangeOptions = {
-    durable: options.durable,
-    autoDelete: options.autoDelete,
-  };
+  const exchangeOptions = buildExchangeOptionsFrom(command);
 
-  const readAndSendInput = async (
+  const sendMessages = async (
     context: IConnectionContext
   ): Promise<IConnectionContext> => {
-    for (const message of fnReadInput()) {
-      await publish(context, message);
+    for (const message of readInput()) {
+      await sendOutput(context, message);
     }
 
     return context;
   };
 
-  connectToBroker(options.url)
+  const setupExchange = declareExchange(
+    exchangeName,
+    "topic",
+    exchangeOptions,
+    command.assert
+  );
+
+  connectToBroker(command.url)
     .then(createChannel)
-    .then(
-      declareExchange(exchangeName, "topic", exchangeOptions, options.assert)
-    )
-    .then(readAndSendInput)
+    .then(setupExchange)
+    .then(sendMessages)
     .then(closeChannel)
     .then(disconnectFromBroker)
     .then(() => log("Produce action executed successfully"));
