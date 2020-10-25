@@ -1,6 +1,6 @@
 import { Command, program } from "commander";
 import { actionConsumeQueue } from "./from-queue.action";
-import { reportErrorAndExit } from "../common";
+import { reportErrorAndExit } from "../../common";
 
 export function buildConsumeFromQueueCommand(): Command {
   return program

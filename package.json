@@ -22,7 +22,7 @@
     "postbuild": "cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "rimraf dist/",
     "test": "jest src/ --detectOpenHandles",
-    "test:coverage": "jest src/ --collectCoverage --collectCoverageFrom='src/**/*.ts'",
+    "test:coverage": "jest src/ --collectCoverage --detectOpenHandles --collectCoverageFrom='src/**/*.ts'",
     "pretest:build": "npm run build",
     "test:build": "cd dist/ && jest src/",
     "lint": "eslint src/ && tsc --project tsconfig.json --noEmit",

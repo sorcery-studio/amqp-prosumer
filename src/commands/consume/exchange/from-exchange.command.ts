@@ -1,6 +1,6 @@
 import { Command, program } from "commander";
 import { actionConsumeExchange } from "./from-exchange.action";
-import { reportErrorAndExit } from "../common";
+import { reportErrorAndExit } from "../../common";
 
 export function buildConsumeFromExchangeCommand(): Command {
   return program

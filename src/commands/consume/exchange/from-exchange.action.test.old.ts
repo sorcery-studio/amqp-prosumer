@@ -1,12 +1,8 @@
 import { Command } from "commander";
 import * as amqp from "amqplib";
-import fs from "fs";
 import { actionConsumeExchange } from "./from-exchange.action";
-import { ConsumeMessage } from "amqplib";
-import { channel } from "../../__mocks__/amqplib";
-import { writeMessageToFile } from "./output-writer";
+import { channel } from "../../../__mocks__/amqplib";
 
-jest.mock("fs");
 jest.mock("amqplib");
 
 describe("Consume From Exchange Action Unit Tests", () => {
@@ -76,12 +72,5 @@ describe("Consume From Exchange Action Unit Tests", () => {
       "test-exchange",
       "#"
     );
-  });
-
-  test("writeMessageToFile writes file to system", () => {
-    writeMessageToFile({
-      content: Buffer.from("example-message"),
-    } as ConsumeMessage);
-    expect(fs.writeFileSync).toBeCalledWith(1, "example-message\n");
   });
 });

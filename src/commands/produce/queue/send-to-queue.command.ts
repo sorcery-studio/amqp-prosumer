@@ -1,9 +1,11 @@
 import { Command, program } from "commander";
-import { actionProduceQueue } from "./to-queue.action";
+import { actionProduceQueue } from "./send-to-queue.action";
 
-export function buildProduceToQueueCommand(): Command {
+export function buildSendToQueueCommand(): Command {
   return program
-    .command("to-queue <name>")
+    .command("send-to-queue <name>")
+    .alias("queue")
+    .description("Sends messages to a defined queue")
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",
@@ -11,7 +13,7 @@ export function buildProduceToQueueCommand(): Command {
     )
     .option(
       "-a, --assert",
-      "Perform assertion of the exchange before binding to it",
+      "Perform assertion of the queue before binding to it",
       false
     )
     .option(

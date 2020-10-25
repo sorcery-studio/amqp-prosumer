@@ -1,12 +1,12 @@
 import * as amqp from "amqplib";
 import { actionConsumeExchange } from "./from-exchange.action";
 import { Command } from "commander";
-import { ConsumeCallback, ConsumeResult } from "../../utils/amqp-adapter";
+import { ConsumeCallback, ConsumeResult } from "../../../utils/amqp-adapter";
 
 jest.unmock("amqplib");
 
 describe("Consume From Exchange Action Integration Tests", () => {
-  test("integration it consumes a message which is sent to the exchange and writes it as a new line to STDIO", async (done) => {
+  test("it consumes a message which is sent to the exchange and writes it as a new line to STDIO", async (done) => {
     const cmd = {
       assert: true,
       autoDelete: true,
@@ -19,13 +19,17 @@ describe("Consume From Exchange Action Integration Tests", () => {
     const ch = await conn.createConfirmChannel();
 
     const onMessage: ConsumeCallback = async (msg) => {
-      expect(msg.content.toString()).toEqual("test-message");
-      // Make sure that you got everything before you shut down
       await ch.waitForConfirms();
       await ch.close();
       await conn.close();
+
+      if (shutdown) {
+        await shutdown();
+      }
+
+      expect(msg.content.toString()).toEqual("test-message");
+
       done();
-      await shutdown(); // It's not the case
 
       return ConsumeResult.ACK;
     };

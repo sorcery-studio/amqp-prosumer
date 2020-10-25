@@ -10,14 +10,14 @@ describe("Produce Command", () => {
   });
 
   test("it defines the to-queue sub-command", () => {
-    expect(consume.commands.some((cmd) => cmd.name() === "to-queue")).toEqual(
-      true
-    );
+    expect(
+      consume.commands.some((cmd) => cmd.name() === "send-to-queue")
+    ).toEqual(true);
   });
 
   test("it defines the to-exchange sub-command", () => {
     expect(
-      consume.commands.some((cmd) => cmd.name() === "to-exchange")
+      consume.commands.some((cmd) => cmd.name() === "publish-to-exchange")
     ).toEqual(true);
   });
 });

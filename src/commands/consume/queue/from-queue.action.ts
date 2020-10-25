@@ -10,13 +10,13 @@ import {
   declareQueue,
   disconnectFromBroker,
   IConsumerContext,
-} from "../../utils/amqp-adapter";
+} from "../../../utils/amqp-adapter";
 import {
   registerShutdownHandler,
   RegisterShutdownHandlerFn,
   ShutdownHandlerFn,
-} from "../common";
-import { writeMessageToFile } from "./output-writer";
+} from "../../common";
+import { writeMessageToFile } from "../output-writer";
 import { Options } from "amqplib";
 
 const log = debug("amqp-prosumer:consumer");

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import * as amqp from "amqplib";
-import { actionProduceQueue } from "./to-queue.action";
-import { InputReaderGen } from "../../utils/io";
+import { actionProduceQueue } from "./send-to-queue.action";
+import { InputReaderGen } from "../../../utils/io";
 
 jest.unmock("amqplib");
 
@@ -21,13 +21,12 @@ describe("Produce To Queue Action", () => {
     });
 
     const { consumerTag } = await ch.consume(q.queue, async (msg) => {
-      const text = msg?.content.toString();
-
-      expect(text).toEqual("test-message");
-
       await ch.cancel(consumerTag);
       await ch.close();
       await conn.close();
+
+      const text = msg?.content.toString();
+      expect(text).toEqual("test-message");
 
       done();
     });

@@ -1,13 +1,13 @@
 import { Command } from "commander";
 import { CommandFactoryFn } from "../common";
-import { buildProduceToQueueCommand } from "./to-queue.command";
-import { buildProduceToExchangeCommand } from "./to-exchange.command";
+import { buildPublishToExchangeCommand } from "./exchange/publish-to-exchange.command";
+import { buildSendToQueueCommand } from "./queue/send-to-queue.command";
 
 export function buildProduceCommand(commandFactory: CommandFactoryFn): Command {
   const consumeCommand = commandFactory("produce");
 
-  consumeCommand.addCommand(buildProduceToQueueCommand());
-  consumeCommand.addCommand(buildProduceToExchangeCommand());
+  consumeCommand.addCommand(buildSendToQueueCommand());
+  consumeCommand.addCommand(buildPublishToExchangeCommand());
 
   return consumeCommand;
 }

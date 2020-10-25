@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import * as amqp from "amqplib";
-import { actionProduceExchange } from "./to-exchange.action";
-import { InputReaderGen } from "../../utils/io";
+import { actionProduceExchange } from "./publish-to-exchange.action";
+import { InputReaderGen } from "../../../utils/io";
 
 jest.unmock("amqplib");
 
@@ -20,6 +20,8 @@ describe("Produce To Exchange Action", () => {
       "topic",
       { durable: false, autoDelete: true }
     );
+
+    // We'll need a temporary queue to get the test results
     const queue = await ch.assertQueue("", {
       autoDelete: true,
       durable: false,
@@ -28,13 +30,12 @@ describe("Produce To Exchange Action", () => {
     await ch.bindQueue(queue.queue, exchange.exchange, "#");
 
     const { consumerTag } = await ch.consume(queue.queue, async (msg) => {
-      const text = msg?.content.toString();
-
-      expect(text).toEqual("test-message");
-
       await ch.cancel(consumerTag);
       await ch.close();
       await conn.close();
+
+      const text = msg?.content.toString();
+      expect(text).toEqual("test-message");
 
       done();
     });

@@ -1,48 +1,40 @@
 import { Command } from "commander";
 import { debug, Debugger } from "debug";
+import { readInputFile } from "../../../utils/io";
 import {
   closeChannel,
   connectToBroker,
   createChannel,
-  declareQueue,
+  declareExchange,
   disconnectFromBroker,
   IConnectionContext,
-  sendToQueue,
-} from "../../utils/amqp-adapter";
-import { readInputFile } from "../../utils/io";
+  publish,
+} from "../../../utils/amqp-adapter";
 import { Options } from "amqplib";
 
 const logger = debug("amqp-prosumer:producer");
 
-function buildQueueOptionsFrom(command: Command): Options.AssertQueue {
+function buildExchangeOptionsFrom(command: Command): Options.AssertExchange {
   return {
     durable: command.durable,
     autoDelete: command.autoDelete,
   };
 }
 
-export async function actionProduceQueue(
-  queueName: string,
+export async function actionProduceExchange(
+  exchangeName: string,
   command: Command,
   readInput = readInputFile,
-  sendOutput = sendToQueue,
+  sendOutput = publish,
   log: Debugger = logger
 ): Promise<void> {
   log("Staring the producer action");
 
-  const setupQueue = declareQueue(
-    queueName,
-    buildQueueOptionsFrom(command),
-    command.assert
-  );
+  const exchangeOptions = buildExchangeOptionsFrom(command);
 
   const sendMessages = async (
     context: IConnectionContext
   ): Promise<IConnectionContext> => {
-    if (!context.queueName) {
-      throw new Error("Can't send to queue if the the name is not defined");
-    }
-
     for (const message of readInput()) {
       await sendOutput(context, message);
     }
@@ -50,12 +42,18 @@ export async function actionProduceQueue(
     return context;
   };
 
+  const setupExchange = declareExchange(
+    exchangeName,
+    "topic",
+    exchangeOptions,
+    command.assert
+  );
+
   connectToBroker(command.url)
     .then(createChannel)
-    .then(setupQueue)
+    .then(setupExchange)
     .then(sendMessages)
     .then(closeChannel)
     .then(disconnectFromBroker)
-    .then(() => log("Produce action executed successfully"))
-    .catch((err) => console.error("Something bad happened", err));
+    .then(() => log("Produce action executed successfully"));
 }

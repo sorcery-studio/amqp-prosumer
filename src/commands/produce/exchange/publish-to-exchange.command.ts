@@ -1,10 +1,12 @@
 import { Command, program } from "commander";
-import { reportErrorAndExit } from "../common";
-import { actionProduceExchange } from "./to-exchange.action";
+import { reportErrorAndExit } from "../../common";
+import { actionProduceExchange } from "./publish-to-exchange.action";
 
-export function buildProduceToExchangeCommand(): Command {
+export function buildPublishToExchangeCommand(): Command {
   const produce = program
-    .command("to-exchange <name>")
+    .command("publish-to-exchange <name>")
+    .alias("exchange")
+    .description("Publishes messages to the defined exchange")
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",
