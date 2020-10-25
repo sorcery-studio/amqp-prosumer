@@ -60,7 +60,7 @@ Right now the tool provides support only for `topic` exchanges, and still, it do
 
 ## Debugging
 
-If you'd like to know what's happening while the command is running, start it with the `DEBUG="*"` environment variable set. When you want to redirect the STDIO of `amqp-prosumer` to another application or to a file, debug messages will not be passed.
+If you'd like to know what's happening while the command is running, start it with the `DEBUG="*"` environment variable set. When you want to redirect the STDOUT of `amqp-prosumer` to another application or to a file, debug messages will not be passed.
 
 ```bash
 DEBUG="*" amqp-prosumer consume from-queue ExampleQueue
