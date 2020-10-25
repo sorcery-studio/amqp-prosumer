@@ -52,9 +52,13 @@ amqp-prosumer consume from-exchange ExampleExchange > output.txt
 amqp-prosumer consume from-queue ExampleQueue > output.txt
 ```
 
+### Node.JS and RabbitMQ support
+
+The tool is transpiled for Node v10, v12 and v14. Each version is integration-tested with the latest RabbitMQ available at Docker Hub.
+
 ## Limitations
 
-Right now the tool provides support only for `topic` exchanges, and still, it does not utilize all the possibilities which this type of exchange gives (like setting the topic for the queue). Such missing functionality might me added in the future.  
+Right now the tool provides support only for `topic` exchanges, and still, it does not utilize all the possibilities which this type of exchange gives (like setting the topic for the queue). Such missing functionality might me added in the future.
 
 ## Debugging
 
@@ -66,4 +70,4 @@ DEBUG="*" amqp-prosumer consume from-queue ExampleQueue
 
 ## About this project
 
-Just for you to know: this is a side/training project which is used to exercise _sorta functional programming_ in JavaScript. _Sorta_ comes from the fact that JS is not really a language with FP core concepts included. There are open-source projects which attempt to implement FP for JS in form of frameworks, but this project intentionally avoids making use of them in order to serve the purpose of "training". 
+Just for you to know: this is a side/training project which is used to exercise _sorta functional programming_ in JavaScript. _Sorta_ comes from the fact that JS is not really a language with FP core concepts included. There are open-source projects which attempt to implement FP for JS in form of frameworks, but this project intentionally avoids making use of them in order to serve the purpose of "training".

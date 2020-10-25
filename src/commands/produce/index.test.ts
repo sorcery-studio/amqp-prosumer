@@ -9,7 +9,7 @@ describe("Produce Command", () => {
     expect(produce).toBeInstanceOf(Command);
     expect(produce.alias()).toEqual("p");
     expect(produce.description()).toEqual(
-        "Produce messages to a queue or an exchange"
+      "Produce messages to a queue or an exchange"
     );
   });
 
