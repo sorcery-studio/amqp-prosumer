@@ -4,10 +4,11 @@ import { buildPublishToExchangeCommand } from "./exchange/publish-to-exchange.co
 import { buildSendToQueueCommand } from "./queue/send-to-queue.command";
 
 export function buildProduceCommand(commandFactory: CommandFactoryFn): Command {
-  const consumeCommand = commandFactory("produce");
+  const cmd = commandFactory("produce");
+  cmd.alias("p").description("Produce messages to a queue or an exchange");
 
-  consumeCommand.addCommand(buildSendToQueueCommand());
-  consumeCommand.addCommand(buildPublishToExchangeCommand());
+  cmd.addCommand(buildSendToQueueCommand());
+  cmd.addCommand(buildPublishToExchangeCommand());
 
-  return consumeCommand;
+  return cmd;
 }

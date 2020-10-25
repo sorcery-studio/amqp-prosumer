@@ -63,3 +63,7 @@ If you'd like to know what's happening while the command is running, start it wi
 ```bash
 DEBUG="*" amqp-prosumer consume from-queue ExampleQueue
 ```
+
+## About this project
+
+Just for you to know: this is a side/training project which is used to exercise _sorta functional programming_ in JavaScript. _Sorta_ comes from the fact that JS is not really a language with FP core concepts included. There are open-source projects which attempt to implement FP for JS in form of frameworks, but this project intentionally avoids making use of them in order to serve the purpose of "training". 

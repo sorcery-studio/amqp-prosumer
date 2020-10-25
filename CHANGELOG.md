@@ -1,32 +1,21 @@
 # Changelog
 
-## [Unreleased] - YYYY-MM-DD
+## [1.0.0] - 2020-10-25
 
-### `produce` command
+This release is a major rewrite of the tool. From this release the tool is going to be more use-case oriented, which means that the list of available (sub)commands has changed.
 
-#### Changed
+Migration guide will not be provided as the project is at a very early stage. Please refer to the commands `--help` to learn about the available sub-commands and their options.
 
-* The `-h, --host` parameter has been replaced by `-u, --uri`.
-* The `produce` command no longer waits 2 seconds before exiting.
+### Changed
 
-### `consume` command
-
-#### Added
-
-* Support for the `--durable` parameter.
-* Support for the `--exclusive` parameter.
-* Support for the `--autoDelete` parameter.
-
-#### Changed
-
-* The `-h, --host` parameter has been replaced by `-u, --uri`.
+* `produce` and `consume` commands have been divided to more specialized subcommands.
 
 ## [0.3.0] - 2020-08-10
 
 ### Changed
 
-* The `produce` command no longer waits 2 seconds before exit.
-* Bump `lodash` from 4.17.15 to 4.17.19 - security update
+* The `produce` command no longer waits 2 seconds before exiting.
+* Bump `lodash` from 4.17.15 to 4.17.19 - security update.
 
 ## [0.2.4] - 2020-06-30
 

@@ -18,7 +18,7 @@ export function buildSendToQueueCommand(): Command {
     )
     .option(
       "-d, --durable",
-      "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
+      "Mark the resulting queue as 'durable' which will make it survive broker restarts",
       false
     )
     .action(actionProduceQueue) as Command;

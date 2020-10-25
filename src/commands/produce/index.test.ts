@@ -3,21 +3,25 @@ import { buildProduceCommand } from "./";
 import { CommandFactoryFn } from "../common";
 
 describe("Produce Command", () => {
-  const consume = buildProduceCommand(createCommand as CommandFactoryFn);
+  const produce = buildProduceCommand(createCommand as CommandFactoryFn);
 
-  test("it returns a command object as a result", () => {
-    expect(consume).toBeInstanceOf(Command);
+  test("it defines the command, it's alias and description", () => {
+    expect(produce).toBeInstanceOf(Command);
+    expect(produce.alias()).toEqual("p");
+    expect(produce.description()).toEqual(
+        "Produce messages to a queue or an exchange"
+    );
   });
 
   test("it defines the to-queue sub-command", () => {
     expect(
-      consume.commands.some((cmd) => cmd.name() === "send-to-queue")
+      produce.commands.some((cmd) => cmd.name() === "send-to-queue")
     ).toEqual(true);
   });
 
   test("it defines the to-exchange sub-command", () => {
     expect(
-      consume.commands.some((cmd) => cmd.name() === "publish-to-exchange")
+      produce.commands.some((cmd) => cmd.name() === "publish-to-exchange")
     ).toEqual(true);
   });
 });

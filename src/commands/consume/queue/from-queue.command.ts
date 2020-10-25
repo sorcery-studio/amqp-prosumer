@@ -5,6 +5,8 @@ import { reportErrorAndExit } from "../../common";
 export function buildConsumeFromQueueCommand(): Command {
   return program
     .command("from-queue <queueName>")
+    .alias("queue")
+    .description("Consume messages from a defined queue")
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",

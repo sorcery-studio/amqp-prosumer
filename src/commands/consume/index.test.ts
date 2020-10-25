@@ -5,8 +5,12 @@ import { CommandFactoryFn } from "../common";
 describe("Consume Command", () => {
   const consume = buildConsumeCommand(createCommand as CommandFactoryFn);
 
-  test("it returns a command object as a result", () => {
+  test("it defines the command, it's alias and description", () => {
     expect(consume).toBeInstanceOf(Command);
+    expect(consume.alias()).toEqual("c");
+    expect(consume.description()).toEqual(
+      "Consume messages from a queue or an exchange"
+    );
   });
 
   test("it defines the from-queue sub-command", () => {

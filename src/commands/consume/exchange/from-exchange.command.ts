@@ -5,6 +5,8 @@ import { reportErrorAndExit } from "../../common";
 export function buildConsumeFromExchangeCommand(): Command {
   return program
     .command("from-exchange <exchangeName>")
+    .alias("exchange")
+    .description("Consume messages published to a exchange")
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",

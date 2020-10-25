@@ -4,10 +4,11 @@ import { buildConsumeFromQueueCommand } from "./queue/from-queue.command";
 import { buildConsumeFromExchangeCommand } from "./exchange/from-exchange.command";
 
 export function buildConsumeCommand(cmdFactory: CommandFactoryFn): Command {
-  const consumeCommand = cmdFactory("consume");
+  const cmd = cmdFactory("consume");
+  cmd.alias("c").description("Consume messages from a queue or an exchange");
 
-  consumeCommand.addCommand(buildConsumeFromQueueCommand());
-  consumeCommand.addCommand(buildConsumeFromExchangeCommand());
+  cmd.addCommand(buildConsumeFromQueueCommand());
+  cmd.addCommand(buildConsumeFromExchangeCommand());
 
-  return consumeCommand;
+  return cmd;
 }
