@@ -33,7 +33,6 @@ export interface IConsumerContext extends IConnectionContext {
  * @return {Promise<ConsumeResult>} Consume result which will determine the faith of the message passed to the consumer
  */
 export type ConsumeCallback = (msg: ConsumeMessage) => Promise<ConsumeResult>;
-export type CancelCallback = () => void;
 type AnyFunction = (...args: any[]) => any;
 
 export function createDefaultChannelEventListeners(
@@ -212,7 +211,6 @@ export function wrapMessageHandler(
         "The consumer was cancelled by the server, we should shut down now..."
       );
 
-      // await onCancel();
       return;
     }
 
