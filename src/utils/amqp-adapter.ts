@@ -332,13 +332,15 @@ export async function waitForDrain(channel: Channel): Promise<void> {
 export type AsyncMessageConsumer = (
   msg: amqp.ConsumeMessage | null
 ) => Promise<void>;
+
 type MessageConsumer = (msg: amqp.ConsumeMessage | null) => void;
-export const wrapOnMessage = (
+
+export function wrapOnMessage(
   onMessage: AsyncMessageConsumer
-): MessageConsumer => {
+): MessageConsumer {
   return (msg: amqp.ConsumeMessage | null): void => {
     onMessage(msg).catch((err) =>
       console.log("Error during AMQP message processing", err)
     );
   };
-};
+}
