@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-const mockParseAsync = jest.fn(() => new Promise(() => Promise.resolve()));
+const mockParseAsync = jest.fn(() => Promise.resolve());
 
 const mockCreateApp = jest.fn(() => {
   return {

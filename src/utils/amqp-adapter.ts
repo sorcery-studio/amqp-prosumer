@@ -4,6 +4,7 @@
 
 import { debug } from "debug";
 import * as amqplib from "amqplib";
+import * as amqp from "amqplib";
 import { Channel, Connection, ConsumeMessage, Options } from "amqplib";
 
 const log = debug("amqp-prosumer:amqp-adapter");
@@ -327,3 +328,17 @@ export async function waitForDrain(channel: Channel): Promise<void> {
     });
   });
 }
+
+export type AsyncMessageConsumer = (
+  msg: amqp.ConsumeMessage | null
+) => Promise<void>;
+type MessageConsumer = (msg: amqp.ConsumeMessage | null) => void;
+export const wrapOnMessage = (
+  onMessage: AsyncMessageConsumer
+): MessageConsumer => {
+  return (msg: amqp.ConsumeMessage | null): void => {
+    onMessage(msg).catch((err) =>
+      console.log("Error during AMQP message processing", err)
+    );
+  };
+};

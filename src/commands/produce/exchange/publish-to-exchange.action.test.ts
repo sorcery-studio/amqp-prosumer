@@ -2,6 +2,10 @@ import { Command } from "commander";
 import * as amqp from "amqplib";
 import { actionProduceExchange } from "./publish-to-exchange.action";
 import { InputReaderGen } from "../../../utils/io";
+import {
+  AsyncMessageConsumer,
+  wrapOnMessage,
+} from "../../../utils/amqp-adapter";
 
 jest.unmock("amqplib");
 
@@ -31,7 +35,7 @@ describe("Produce To Exchange Action", () => {
 
     await ch.bindQueue(queue.queue, exchange.exchange, "#");
 
-    const { consumerTag } = await ch.consume(queue.queue, async (msg) => {
+    const onMessage: AsyncMessageConsumer = async (msg) => {
       await ch.cancel(consumerTag);
       await ch.close();
       await conn.close();
@@ -40,7 +44,12 @@ describe("Produce To Exchange Action", () => {
       expect(text).toEqual("test-message");
 
       done();
-    });
+    };
+
+    const { consumerTag } = await ch.consume(
+      queue.queue,
+      wrapOnMessage(onMessage)
+    );
 
     const readInput: InputReaderGen = function* () {
       yield "test-message";
@@ -78,7 +87,7 @@ describe("Produce To Exchange Action", () => {
 
     await ch.bindQueue(queue.queue, exchange.exchange, "example-key");
 
-    const { consumerTag } = await ch.consume(queue.queue, async (msg) => {
+    const onMessage: AsyncMessageConsumer = async (msg) => {
       await ch.cancel(consumerTag);
       await ch.close();
       await conn.close();
@@ -87,7 +96,12 @@ describe("Produce To Exchange Action", () => {
       expect(text).toEqual("test-message");
 
       done();
-    });
+    };
+
+    const { consumerTag } = await ch.consume(
+      queue.queue,
+      wrapOnMessage(onMessage)
+    );
 
     const readInput: InputReaderGen = function* () {
       yield "test-message";

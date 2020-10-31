@@ -15,6 +15,9 @@
     "SharedArrayBuffer": "readonly"
   },
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
   "plugins": ["@typescript-eslint", "prettier", "jest", "immutable"],
   "rules": {
     "no-console": "off",
@@ -29,6 +32,8 @@
     "immutable/no-mutation": "error",
     "no-var": "error",
     "no-undef": "error",
-    "no-param-reassign": "error"
+    "no-param-reassign": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/no-floating-promises": "error"
   }
 }

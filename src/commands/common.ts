@@ -15,6 +15,14 @@ export type ShutdownHandlerFn = () => Promise<void>;
 
 export type RegisterShutdownHandlerFn = (handler: ShutdownHandlerFn) => void;
 
+function executeShutdown(shutdownFn: () => Promise<void>): () => void {
+  return (): void => {
+    shutdownFn().catch((err) =>
+      console.error("Issue during execution of the shutdown function", err)
+    );
+  };
+}
+
 /**
  * Register a handler function which will be called for SIGINT/SIGTERM or on error conditions
  *
@@ -34,10 +42,12 @@ export const registerShutdownHandler: RegisterShutdownHandlerFn = (
       log("Shutdown handler complete");
     };
 
-    process.once("disconnect", shutdown);
-    process.once("SIGINT", shutdown);
-    process.once("SIGTERM", shutdown);
-    process.once("uncaughtException", shutdown);
-    process.once("unhandledRejection", shutdown);
-  })();
+    process.once("disconnect", executeShutdown(shutdown));
+    process.once("SIGINT", executeShutdown(shutdown));
+    process.once("SIGTERM", executeShutdown(shutdown));
+    process.once("uncaughtException", executeShutdown(shutdown));
+    process.once("unhandledRejection", executeShutdown(shutdown));
+  })().catch((err) =>
+    console.error("Error during shutdown handler registration", err)
+  );
 };

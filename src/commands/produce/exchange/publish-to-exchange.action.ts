@@ -55,5 +55,11 @@ export async function actionProduceExchange(
     .then(sendMessages)
     .then(closeChannel)
     .then(disconnectFromBroker)
-    .then(() => log("Produce action executed successfully"));
+    .then(() => log("Produce action executed successfully"))
+    .catch((err) =>
+      console.error(
+        "Publishing to exchange was affected by the following error",
+        err
+      )
+    );
 }

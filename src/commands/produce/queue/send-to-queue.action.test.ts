@@ -2,6 +2,10 @@ import { Command } from "commander";
 import * as amqp from "amqplib";
 import { actionProduceQueue } from "./send-to-queue.action";
 import { InputReaderGen } from "../../../utils/io";
+import {
+  AsyncMessageConsumer,
+  wrapOnMessage,
+} from "../../../utils/amqp-adapter";
 
 jest.unmock("amqplib");
 
@@ -20,7 +24,7 @@ describe("Produce To Queue Action", () => {
       autoDelete: true,
     });
 
-    const { consumerTag } = await ch.consume(q.queue, async (msg) => {
+    const onMessage: AsyncMessageConsumer = async (msg) => {
       await ch.cancel(consumerTag);
       await ch.close();
       await conn.close();
@@ -29,7 +33,9 @@ describe("Produce To Queue Action", () => {
       expect(text).toEqual("test-message");
 
       done();
-    });
+    };
+
+    const { consumerTag } = await ch.consume(q.queue, wrapOnMessage(onMessage));
 
     const readInput: InputReaderGen = function* () {
       yield "test-message";
