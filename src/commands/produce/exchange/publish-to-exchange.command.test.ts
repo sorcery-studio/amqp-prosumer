@@ -35,6 +35,6 @@ describe("Produce To Exchange Command", () => {
 
   test("it allows to specify the routing key to use while publishing, default ''", () => {
     expect(options).toContain("routingKey");
-    expect(command.exchangeType).toEqual("");
+    expect(command.routingKey).toEqual("");
   });
 });
