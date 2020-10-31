@@ -43,20 +43,26 @@ async function connectTestToBroker(
 
 async function disconnectTestFromBroker(
   connection: Connection,
-  channel: ConfirmChannel,
-  consumerTag?: string
+  channel: ConfirmChannel
 ): Promise<void> {
-  if (consumerTag) {
-    await channel.cancel(consumerTag);
-  }
-
   await channel.close();
   await connection.close();
 }
 
-function createMessageExpectation(
+/**
+ * Helper function which will run the provided operation and await the resulting test message.
+ *
+ * It will resolve once the message arrives and the test passes.
+ *
+ * @param channel The AMQP channel to 'listen for the message'
+ * @param queue The information about the queue to use for this channel
+ * @param operation The thunk representing the operation to perform, which should with message arriving
+ * @param done The Jest done callback which will be called once the message finally arrives
+ */
+function runOperationAndAwaitMessage(
   channel: ConfirmChannel,
   queue: AssertQueue,
+  operation: () => Promise<void> | void,
   done: jest.DoneCallback
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -68,6 +74,7 @@ function createMessageExpectation(
         resolve();
         done();
       })
+      .then(() => operation())
       .catch((err) => reject(err));
   });
 }
@@ -90,9 +97,12 @@ describe("Produce To Exchange Action", () => {
       "some-topic"
     );
 
-    const messageArrived = createMessageExpectation(channel, queue, done);
-    await actionProduceExchange(exchangeName, cmd, readTestInput);
-    await messageArrived;
+    await runOperationAndAwaitMessage(
+      channel,
+      queue,
+      () => actionProduceExchange(exchangeName, cmd, readTestInput),
+      done
+    );
     await disconnectTestFromBroker(connection, channel);
   });
 
@@ -113,9 +123,12 @@ describe("Produce To Exchange Action", () => {
       "example-key"
     );
 
-    const messageArrived = createMessageExpectation(channel, queue, done);
-    await actionProduceExchange(exchangeName, cmd, readTestInput);
-    await messageArrived;
+    await runOperationAndAwaitMessage(
+      channel,
+      queue,
+      () => actionProduceExchange(exchangeName, cmd, readTestInput),
+      done
+    );
     await disconnectTestFromBroker(connection, channel);
   });
 
@@ -135,9 +148,12 @@ describe("Produce To Exchange Action", () => {
       ""
     );
 
-    const messageArrived = createMessageExpectation(channel, queue, done);
-    await actionProduceExchange(exchangeName, cmd, readTestInput);
-    await messageArrived;
+    await runOperationAndAwaitMessage(
+      channel,
+      queue,
+      () => actionProduceExchange(exchangeName, cmd, readTestInput),
+      done
+    );
     await disconnectTestFromBroker(connection, channel);
   });
 });
