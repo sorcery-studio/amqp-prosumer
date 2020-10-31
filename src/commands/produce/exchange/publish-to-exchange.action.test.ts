@@ -12,7 +12,7 @@ describe("Produce To Exchange Action", () => {
       autoDelete: true,
       assert: true,
       exchangeType: "topic",
-      routingKey: "#"
+      routingKey: "#",
     };
 
     const conn = await amqp.connect("amqp://localhost");
@@ -59,15 +59,15 @@ describe("Produce To Exchange Action", () => {
       autoDelete: true,
       assert: true,
       exchangeType: "direct",
-      routingKey: "example-key"
+      routingKey: "example-key",
     };
 
     const conn = await amqp.connect("amqp://localhost");
     const ch = await conn.createConfirmChannel();
     const exchange = await ch.assertExchange(
-        "test-exchange-producer-direct",
-        cmd.exchangeType,
-        { durable: false, autoDelete: true }
+      "test-exchange-producer-direct",
+      cmd.exchangeType,
+      { durable: false, autoDelete: true }
     );
 
     // We'll need a temporary queue to get the test results
@@ -94,9 +94,9 @@ describe("Produce To Exchange Action", () => {
     };
 
     await actionProduceExchange(
-        "test-exchange-producer-direct",
-        (cmd as unknown) as Command,
-        readInput
+      "test-exchange-producer-direct",
+      (cmd as unknown) as Command,
+      readInput
     );
   });
 });

@@ -29,12 +29,12 @@ describe("Produce To Exchange Command", () => {
   });
 
   test("it allows to specify the type of the exchange, default 'topic'", () => {
-    expect(options).toContain("exchangeType")
-    expect(command.type).toEqual("topic");
+    expect(options).toContain("exchangeType");
+    expect(command.exchangeType).toEqual("topic");
   });
 
   test("it allows to specify the routing key to use while publishing, default ''", () => {
-    expect(options).toContain("routingKey")
-    expect(command.type).toEqual("");
+    expect(options).toContain("routingKey");
+    expect(command.exchangeType).toEqual("");
   });
 });
