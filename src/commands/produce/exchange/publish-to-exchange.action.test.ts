@@ -2,115 +2,142 @@ import { Command } from "commander";
 import * as amqp from "amqplib";
 import { actionProduceExchange } from "./publish-to-exchange.action";
 import { InputReaderGen } from "../../../utils/io";
-import {
-  AsyncMessageConsumer,
-  wrapOnMessage,
-} from "../../../utils/amqp-adapter";
+import { ConfirmChannel, Connection, Replies } from "amqplib";
+import AssertQueue = Replies.AssertQueue;
 
 jest.unmock("amqplib");
 
+const readTestInput: InputReaderGen = function* () {
+  yield "test-message";
+};
+
+interface IConnectionContext {
+  connection: Connection;
+  channel: ConfirmChannel;
+  queue: AssertQueue;
+}
+
+async function connectTestToBroker(
+  exchangeName: string,
+  exchangeType: string,
+  routingKey: string
+): Promise<IConnectionContext> {
+  const connection = await amqp.connect("amqp://localhost");
+
+  const channel = await connection.createConfirmChannel();
+
+  const exchange = await channel.assertExchange(exchangeName, exchangeType, {
+    autoDelete: true,
+    durable: false,
+  });
+
+  const queue = await channel.assertQueue("", {
+    autoDelete: true,
+    durable: false,
+  });
+
+  await channel.bindQueue(queue.queue, exchange.exchange, routingKey);
+
+  return { connection, channel, queue };
+}
+
+async function disconnectTestFromBroker(
+  connection: Connection,
+  channel: ConfirmChannel,
+  consumerTag?: string
+): Promise<void> {
+  if (consumerTag) {
+    await channel.cancel(consumerTag);
+  }
+
+  await channel.close();
+  await connection.close();
+}
+
+function createMessageExpectation(
+  channel: ConfirmChannel,
+  queue: AssertQueue,
+  done: jest.DoneCallback
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    channel
+      .consume(queue.queue, (msg) => {
+        const text = msg?.content.toString();
+        expect(text).toEqual("test-message");
+
+        resolve();
+        done();
+      })
+      .catch((err) => reject(err));
+  });
+}
+
 describe("Produce To Exchange Action", () => {
   test("it sends a message to the appointed exchange (topic)", async (done) => {
-    const cmd = {
+    const cmd = ({
       durable: false,
       autoDelete: true,
       assert: true,
       exchangeType: "topic",
-      routingKey: "#",
-    };
+      routingKey: "some-topic",
+    } as unknown) as Command;
 
-    const conn = await amqp.connect("amqp://localhost");
-    const ch = await conn.createConfirmChannel();
-    const exchange = await ch.assertExchange(
-      "test-exchange-producer-topic",
+    const exchangeName = "test-exchange-producer-topic";
+
+    const { connection, channel, queue } = await connectTestToBroker(
+      exchangeName,
       cmd.exchangeType,
-      { durable: false, autoDelete: true }
+      "some-topic"
     );
 
-    // We'll need a temporary queue to get the test results
-    const queue = await ch.assertQueue("", {
-      autoDelete: true,
-      durable: false,
-    });
-
-    await ch.bindQueue(queue.queue, exchange.exchange, "#");
-
-    const onMessage: AsyncMessageConsumer = async (msg) => {
-      await ch.cancel(consumerTag);
-      await ch.close();
-      await conn.close();
-
-      const text = msg?.content.toString();
-      expect(text).toEqual("test-message");
-
-      done();
-    };
-
-    const { consumerTag } = await ch.consume(
-      queue.queue,
-      wrapOnMessage(onMessage)
-    );
-
-    const readInput: InputReaderGen = function* () {
-      yield "test-message";
-    };
-
-    await actionProduceExchange(
-      "test-exchange-producer-topic",
-      (cmd as unknown) as Command,
-      readInput
-    );
+    const messageArrived = createMessageExpectation(channel, queue, done);
+    await actionProduceExchange(exchangeName, cmd, readTestInput);
+    await messageArrived;
+    await disconnectTestFromBroker(connection, channel);
   });
 
   test("it sends a message to the appointed exchange (direct)", async (done) => {
-    const cmd = {
+    const cmd = ({
       durable: false,
       autoDelete: true,
       assert: true,
       exchangeType: "direct",
       routingKey: "example-key",
-    };
+    } as unknown) as Command;
 
-    const conn = await amqp.connect("amqp://localhost");
-    const ch = await conn.createConfirmChannel();
-    const exchange = await ch.assertExchange(
-      "test-exchange-producer-direct",
+    const exchangeName = "test-exchange-producer-direct";
+
+    const { connection, channel, queue } = await connectTestToBroker(
+      exchangeName,
       cmd.exchangeType,
-      { durable: false, autoDelete: true }
+      "example-key"
     );
 
-    // We'll need a temporary queue to get the test results
-    const queue = await ch.assertQueue("", {
-      autoDelete: true,
+    const messageArrived = createMessageExpectation(channel, queue, done);
+    await actionProduceExchange(exchangeName, cmd, readTestInput);
+    await messageArrived;
+    await disconnectTestFromBroker(connection, channel);
+  });
+
+  test("it sends a message to the appointed exchange (fanout)", async (done) => {
+    const cmd = ({
       durable: false,
-    });
+      autoDelete: true,
+      assert: true,
+      exchangeType: "fanout",
+      routingKey: "fanout-key",
+    } as unknown) as Command;
 
-    await ch.bindQueue(queue.queue, exchange.exchange, "example-key");
-
-    const onMessage: AsyncMessageConsumer = async (msg) => {
-      await ch.cancel(consumerTag);
-      await ch.close();
-      await conn.close();
-
-      const text = msg?.content.toString();
-      expect(text).toEqual("test-message");
-
-      done();
-    };
-
-    const { consumerTag } = await ch.consume(
-      queue.queue,
-      wrapOnMessage(onMessage)
+    const exchangeName = "test-exchange-producer-fanout";
+    const { connection, channel, queue } = await connectTestToBroker(
+      exchangeName,
+      cmd.exchangeType,
+      ""
     );
 
-    const readInput: InputReaderGen = function* () {
-      yield "test-message";
-    };
-
-    await actionProduceExchange(
-      "test-exchange-producer-direct",
-      (cmd as unknown) as Command,
-      readInput
-    );
+    const messageArrived = createMessageExpectation(channel, queue, done);
+    await actionProduceExchange(exchangeName, cmd, readTestInput);
+    await messageArrived;
+    await disconnectTestFromBroker(connection, channel);
   });
 });

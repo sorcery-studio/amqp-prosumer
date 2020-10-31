@@ -4,7 +4,6 @@
 
 import { debug } from "debug";
 import * as amqplib from "amqplib";
-import * as amqp from "amqplib";
 import { Channel, Connection, ConsumeMessage, Options } from "amqplib";
 
 const log = debug("amqp-prosumer:amqp-adapter");
@@ -26,6 +25,12 @@ export interface IConsumerContext extends IConnectionContext {
   readonly consumerTag: string;
 }
 
+export type AsyncMessageConsumer = (
+  msg: amqplib.ConsumeMessage | null
+) => Promise<void>;
+
+export type MessageConsumer = (msg: amqplib.ConsumeMessage | null) => void;
+
 /**
  * Represents a callback function which will be called with the message which got consumed
  *
@@ -34,6 +39,7 @@ export interface IConsumerContext extends IConnectionContext {
  * @return {Promise<ConsumeResult>} Consume result which will determine the faith of the message passed to the consumer
  */
 export type ConsumeCallback = (msg: ConsumeMessage) => Promise<ConsumeResult>;
+
 type AnyFunction = (...args: any[]) => any;
 
 export function createDefaultChannelEventListeners(
@@ -198,12 +204,10 @@ export function bindQueueAndExchange(
   };
 }
 
-type AmqpLibOnMessageFn = (msg: ConsumeMessage | null) => any;
-
 export function wrapMessageHandler(
   channel: Channel,
   handleMessage: ConsumeCallback
-): AmqpLibOnMessageFn {
+): MessageConsumer {
   return async (msg): Promise<void> => {
     log("Consumer received a new message '%s'", msg?.content.toString());
 
@@ -329,16 +333,10 @@ export async function waitForDrain(channel: Channel): Promise<void> {
   });
 }
 
-export type AsyncMessageConsumer = (
-  msg: amqp.ConsumeMessage | null
-) => Promise<void>;
-
-type MessageConsumer = (msg: amqp.ConsumeMessage | null) => void;
-
 export function wrapOnMessage(
   onMessage: AsyncMessageConsumer
 ): MessageConsumer {
-  return (msg: amqp.ConsumeMessage | null): void => {
+  return (msg: amqplib.ConsumeMessage | null): void => {
     onMessage(msg).catch((err) =>
       console.log("Error during AMQP message processing", err)
     );
