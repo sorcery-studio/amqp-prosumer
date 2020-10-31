@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - YYYY-MM-DD
+
+### Added
+
+* The produce to queue command now supports the `exchangeType` and `routingKey` parameters.
+
 ## [1.0.0] - 2020-10-25
 
 This release is a major rewrite of the tool. From this release the tool is going to be more use-case oriented, which means that the list of available (sub)commands has changed.

@@ -22,6 +22,16 @@ export function buildPublishToExchangeCommand(): Command {
       "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
       false
     )
+    .option(
+      "-t, --exchangeType <type>",
+      "Set the type of the exchange",
+      "topic"
+    )
+    .option(
+      "-r, --routingKey <key>",
+      "Set the routing key for each published message",
+      ""
+    )
     .action((exchangeName: string, options: Command) => {
       actionProduceExchange(exchangeName, options).catch(reportErrorAndExit);
     });

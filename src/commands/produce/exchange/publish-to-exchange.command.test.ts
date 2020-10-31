@@ -11,18 +11,30 @@ describe("Produce To Exchange Command", () => {
     );
   });
 
+  const options = Object.keys(command.opts());
+
   test("it defines the 'url' option, default 'amqp://localhost'", () => {
-    expect(Object.keys(command.opts())).toContain("url");
+    expect(options).toContain("url");
     expect(command.url).toEqual("amqp://localhost");
   });
 
-  test("it allows to perform an assertion of a exchange", () => {
-    expect(Object.keys(command.opts())).toContain("assert");
+  test("it allows to perform an assertion of a exchange, default false", () => {
+    expect(options).toContain("assert");
     expect(command.assert).toEqual(false);
   });
 
-  test("it allows to specify if the exchange is 'durable", () => {
-    expect(Object.keys(command.opts())).toContain("durable");
+  test("it allows to specify if the exchange is durable, default false", () => {
+    expect(options).toContain("durable");
     expect(command.durable).toEqual(false);
+  });
+
+  test("it allows to specify the type of the exchange, default 'topic'", () => {
+    expect(options).toContain("exchangeType")
+    expect(command.type).toEqual("topic");
+  });
+
+  test("it allows to specify the routing key to use while publishing, default ''", () => {
+    expect(options).toContain("routingKey")
+    expect(command.type).toEqual("");
   });
 });

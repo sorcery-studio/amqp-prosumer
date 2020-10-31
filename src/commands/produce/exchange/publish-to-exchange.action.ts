@@ -36,7 +36,7 @@ export async function actionProduceExchange(
     context: IConnectionContext
   ): Promise<IConnectionContext> => {
     for (const message of readInput()) {
-      await sendOutput(context, message);
+      await sendOutput(context, message, command.routingKey);
     }
 
     return context;
@@ -44,7 +44,7 @@ export async function actionProduceExchange(
 
   const setupExchange = declareExchange(
     exchangeName,
-    "topic",
+    command.exchangeType,
     exchangeOptions,
     command.assert
   );
