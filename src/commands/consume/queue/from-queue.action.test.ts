@@ -1,7 +1,7 @@
-import * as amqp from "amqplib";
 import { actionConsumeQueue } from "./from-queue.action";
 import { ConsumeCallback, ConsumeResult } from "../../../utils/amqp-adapter";
 import { Command } from "commander";
+import { createTestAsQueueProducer } from "../../../utils/connected-test";
 
 jest.unmock("amqplib");
 
@@ -14,14 +14,15 @@ describe("Consume From Queue Action", () => {
       exclusive: false,
       url: "amqp://localhost",
     };
-    const conn = await amqp.connect("amqp://localhost");
-    const ch = await conn.createConfirmChannel();
+
+    const {
+      disconnectTestFromBroker,
+      sendTestMessage,
+    } = await createTestAsQueueProducer({
+      queueName: "test-queue",
+    });
 
     const onMessage: ConsumeCallback = async (msg) => {
-      await ch.waitForConfirms();
-      await ch.close();
-      await conn.close();
-
       if (shutdown) {
         await shutdown();
       }
@@ -39,6 +40,7 @@ describe("Consume From Queue Action", () => {
       onMessage
     );
 
-    ch.sendToQueue("test-queue", Buffer.from("test-message"));
+    sendTestMessage("test-message");
+    await disconnectTestFromBroker();
   });
 });

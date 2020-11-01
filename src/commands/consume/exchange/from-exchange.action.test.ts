@@ -1,7 +1,7 @@
-import * as amqp from "amqplib";
 import { actionConsumeExchange } from "./from-exchange.action";
 import { Command } from "commander";
 import { ConsumeCallback, ConsumeResult } from "../../../utils/amqp-adapter";
+import { connectTestAsExchangeProducer } from "../../../utils/connected-test";
 
 jest.unmock("amqplib");
 
@@ -15,19 +15,21 @@ describe("Consume From Exchange Action Integration Tests", () => {
       url: "amqp://localhost",
     };
 
-    const conn = await amqp.connect("amqp://localhost");
-    const ch = await conn.createConfirmChannel();
+    const {
+      disconnectTestFromBroker,
+      publishTestMessage,
+    } = await connectTestAsExchangeProducer({
+      exchangeName: "test-exchange",
+      routingKey: "",
+      exchangeType: "topic",
+    });
 
     const onMessage: ConsumeCallback = async (msg) => {
-      await ch.waitForConfirms();
-      await ch.close();
-      await conn.close();
+      expect(msg.content.toString()).toEqual("test-message");
 
       if (shutdown) {
         await shutdown();
       }
-
-      expect(msg.content.toString()).toEqual("test-message");
 
       done();
 
@@ -40,6 +42,7 @@ describe("Consume From Exchange Action Integration Tests", () => {
       onMessage
     );
 
-    ch.publish("test-exchange", "", Buffer.from("test-message"));
+    publishTestMessage("test-message");
+    await disconnectTestFromBroker();
   });
 });

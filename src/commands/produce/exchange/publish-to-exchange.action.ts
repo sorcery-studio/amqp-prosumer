@@ -35,10 +35,8 @@ function parseHeaders(command: Command): PublishHeaders {
 }
 
 function buildPublishOptionsFrom(command: Command): Options.Publish {
-  const headers = parseHeaders(command);
-
   return {
-    headers,
+    headers: parseHeaders(command),
   };
 }
 
