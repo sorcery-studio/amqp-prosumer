@@ -4,7 +4,10 @@
 
 ### Added
 
-* The produce to queue command now supports the `exchangeType` and `routingKey` parameters.
+* The produce to queue command now supports the following options:
+    * `exchangeType` which allows setting the type of the exchange
+    * `routingKey` which allows setting the routing key for published messages
+    * `headers`(variadic) which allows setting the headers for published messages
 
 ## [1.0.0] - 2020-10-25
 

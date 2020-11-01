@@ -21,6 +21,27 @@ function buildExchangeOptionsFrom(command: Command): Options.AssertExchange {
   };
 }
 
+type PublishHeaders = { [key: string]: string };
+
+function parseHeaders(command: Command): PublishHeaders {
+  return command.headers?.reduce((prev: PublishHeaders, cur: string) => {
+    const parts = cur.split("=");
+
+    return {
+      ...prev,
+      [parts[0]]: parts[1],
+    };
+  }, {});
+}
+
+function buildPublishOptionsFrom(command: Command): Options.Publish {
+  const headers = parseHeaders(command);
+
+  return {
+    headers,
+  };
+}
+
 export async function actionProduceExchange(
   exchangeName: string,
   command: Command,
@@ -31,12 +52,13 @@ export async function actionProduceExchange(
   log("Staring the producer action");
 
   const exchangeOptions = buildExchangeOptionsFrom(command);
+  const publishOptions = buildPublishOptionsFrom(command);
 
   const sendMessages = async (
     context: IConnectionContext
   ): Promise<IConnectionContext> => {
     for (const message of readInput()) {
-      await sendOutput(context, message, command.routingKey);
+      await sendOutput(context, message, command.routingKey, publishOptions);
     }
 
     return context;

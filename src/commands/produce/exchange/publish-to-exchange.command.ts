@@ -32,6 +32,7 @@ export function buildPublishToExchangeCommand(): Command {
       "Set the routing key for each published message",
       ""
     )
+    .option("--headers <header...>", "Set the following headers on the message")
     .action((exchangeName: string, options: Command) => {
       actionProduceExchange(exchangeName, options).catch(reportErrorAndExit);
     });

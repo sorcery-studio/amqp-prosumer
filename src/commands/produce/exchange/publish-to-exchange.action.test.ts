@@ -20,7 +20,8 @@ interface IConnectionContext {
 async function connectTestToBroker(
   exchangeName: string,
   exchangeType: string,
-  routingKey: string
+  routingKey = "",
+  bindArgs = {}
 ): Promise<IConnectionContext> {
   const connection = await amqp.connect("amqp://localhost");
 
@@ -36,7 +37,7 @@ async function connectTestToBroker(
     durable: false,
   });
 
-  await channel.bindQueue(queue.queue, exchange.exchange, routingKey);
+  await channel.bindQueue(queue.queue, exchange.exchange, routingKey, bindArgs);
 
   return { connection, channel, queue };
 }
@@ -146,6 +147,36 @@ describe("Produce To Exchange Action", () => {
       exchangeName,
       cmd.exchangeType,
       ""
+    );
+
+    await runOperationAndAwaitMessage(
+      channel,
+      queue,
+      () => actionProduceExchange(exchangeName, cmd, readTestInput),
+      done
+    );
+    await disconnectTestFromBroker(connection, channel);
+  });
+
+  test("it sends a message to the appointed exchange (headers)", async (done) => {
+    const cmd = ({
+      durable: false,
+      autoDelete: true,
+      assert: true,
+      exchangeType: "headers",
+      routingKey: "",
+      headers: ["headerA=A", "headerB=B"],
+    } as unknown) as Command;
+
+    const exchangeName = "test-exchange-producer-headers";
+    const { connection, channel, queue } = await connectTestToBroker(
+      exchangeName,
+      cmd.exchangeType,
+      "",
+      {
+        headerA: "A",
+        headerB: "B",
+      }
     );
 
     await runOperationAndAwaitMessage(

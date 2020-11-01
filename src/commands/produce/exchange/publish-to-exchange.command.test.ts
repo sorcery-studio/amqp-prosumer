@@ -37,4 +37,9 @@ describe("Produce To Exchange Command", () => {
     expect(options).toContain("routingKey");
     expect(command.routingKey).toEqual("");
   });
+
+  test("it allows to specify the headers which will be set on the published message", () => {
+    expect(options).toContain("headers");
+    expect(command.headers).toBeUndefined();
+  });
 });

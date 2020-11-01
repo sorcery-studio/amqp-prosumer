@@ -373,6 +373,34 @@ describe("AMQP FP Adapter", () => {
       expect(result).toBe(correctCtx);
     });
 
+    test("Publishes the message to the exchange and sets the provided headers", async () => {
+      const correctCtx = getCtx({
+        queueName: "test-queue",
+        exchangeName: "test-exchange",
+      });
+
+      correctCtx.channel.publish.mockReturnValue(true);
+
+      const msg = "test-message";
+
+      const headers = {
+        headerA: 1,
+        headerB: 2,
+      };
+
+      const result = await publish(correctCtx, msg, "", { headers });
+
+      expect(correctCtx.channel.publish).toBeCalledWith(
+        "test-exchange",
+        "",
+        expect.any(Buffer),
+        {
+          headers,
+        }
+      );
+      expect(result).toBe(correctCtx);
+    });
+
     test("Throws Error when the exchange name is missing in the context", async () => {
       const brokenContext = getCtx({
         queueName: "test-queue",

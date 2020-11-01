@@ -298,7 +298,8 @@ export async function sendToQueue(
 export async function publish(
   context: IConnectionContext,
   message: string,
-  routingKey = ""
+  routingKey = "",
+  options?: Options.Publish
 ): Promise<IConnectionContext> {
   log("Publishing message to an exchange: %s", message);
 
@@ -306,11 +307,18 @@ export async function publish(
     throw new Error("Missing exchange name");
   }
 
-  const keepSending = await context.channel.publish(
-    context.exchangeName,
-    routingKey,
-    Buffer.from(message)
-  );
+  const keepSending = options
+    ? await context.channel.publish(
+        context.exchangeName,
+        routingKey,
+        Buffer.from(message),
+        options
+      )
+    : await context.channel.publish(
+        context.exchangeName,
+        routingKey,
+        Buffer.from(message)
+      );
 
   if (!keepSending) {
     await waitForDrain(context.channel);
