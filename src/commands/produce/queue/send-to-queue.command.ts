@@ -1,7 +1,14 @@
 import { Command, program } from "commander";
 import { actionProduceQueue } from "./send-to-queue.action";
 
-export function buildSendToQueueCommand(): Command {
+export interface ISendToQueueCommand extends Command {
+  url: string;
+  assert: boolean;
+  durable: boolean;
+  autoDelete: boolean;
+}
+
+export function buildSendToQueueCommand(): ISendToQueueCommand {
   return program
     .command("send-to-queue <name>")
     .alias("queue")
@@ -21,5 +28,6 @@ export function buildSendToQueueCommand(): Command {
       "Mark the resulting queue as 'durable' which will make it survive broker restarts",
       false
     )
-    .action(actionProduceQueue) as Command;
+    .option("--autoDelete", "Marks the used queue for automatic deletion", true)
+    .action(actionProduceQueue) as ISendToQueueCommand;
 }

@@ -2,8 +2,18 @@ import { Command, program } from "commander";
 import { reportErrorAndExit } from "../../common";
 import { actionProduceExchange } from "./publish-to-exchange.action";
 
-export function buildPublishToExchangeCommand(): Command {
-  const produce = program
+export interface IPublishToExchangeCommand extends Command {
+  url: string;
+  assert: boolean;
+  durable: boolean;
+  exchangeType: "direct" | "topic" | "headers" | "fanout";
+  routingKey: string;
+  autoDelete: boolean;
+  headers?: string[];
+}
+
+export function buildPublishToExchangeCommand(): IPublishToExchangeCommand {
+  return program
     .command("publish-to-exchange <name>")
     .alias("exchange")
     .description("Publishes messages to the defined exchange")
@@ -33,9 +43,11 @@ export function buildPublishToExchangeCommand(): Command {
       ""
     )
     .option("--headers <header...>", "Set the following headers on the message")
-    .action((exchangeName: string, options: Command) => {
-      actionProduceExchange(exchangeName, options).catch(reportErrorAndExit);
-    });
-
-  return produce as Command;
+    .action((exchangeName: string, options: IPublishToExchangeCommand) => {
+      try {
+        actionProduceExchange(exchangeName, options);
+      } catch (err) {
+        reportErrorAndExit(err);
+      }
+    }) as IPublishToExchangeCommand;
 }

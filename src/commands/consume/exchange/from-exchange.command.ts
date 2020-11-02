@@ -2,7 +2,13 @@ import { Command, program } from "commander";
 import { actionConsumeExchange } from "./from-exchange.action";
 import { reportErrorAndExit } from "../../common";
 
-export function buildConsumeFromExchangeCommand(): Command {
+export interface IConsumeFromExchangeCommand extends Command {
+  url: string;
+  assert: boolean;
+  durable: boolean;
+}
+
+export function buildConsumeFromExchangeCommand(): IConsumeFromExchangeCommand {
   return program
     .command("from-exchange <exchangeName>")
     .alias("exchange")
@@ -22,7 +28,7 @@ export function buildConsumeFromExchangeCommand(): Command {
       "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
       false
     )
-    .action((exchangeName: string, options: Command) => {
+    .action((exchangeName: string, options: IConsumeFromExchangeCommand) => {
       actionConsumeExchange(exchangeName, options).catch(reportErrorAndExit);
-    }) as Command;
+    }) as IConsumeFromExchangeCommand;
 }

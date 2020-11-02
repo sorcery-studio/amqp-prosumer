@@ -1,5 +1,4 @@
 import { debug } from "debug";
-import { Command } from "commander";
 import {
   cancelConsumer,
   closeChannel,
@@ -18,11 +17,13 @@ import {
 } from "../../common";
 import { writeMessageToFile } from "../output-writer";
 import { Options } from "amqplib";
+import { IConsumeFromQueueCommand } from "./from-queue.command";
 
 const log = debug("amqp-prosumer:consumer");
 
-/** TODO: Remove duplicate? */
-function buildQueueOptionsFrom(command: Command): Options.AssertQueue {
+function buildQueueOptionsFrom(
+  command: IConsumeFromQueueCommand
+): Options.AssertQueue {
   return {
     durable: command.durable,
     autoDelete: command.autoDelete,
@@ -42,7 +43,7 @@ function buildQueueOptionsFrom(command: Command): Options.AssertQueue {
  */
 export async function actionConsumeQueue(
   queueName: string,
-  command: Command,
+  command: IConsumeFromQueueCommand,
   onMessage: ConsumeCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
@@ -51,7 +52,7 @@ export async function actionConsumeQueue(
 
     const registerConsumerShutdown = (context: IConsumerContext): void => {
       log("Consumer started %s", context.consumerTag);
-      const handler = async (): Promise<void> => {
+      const handler = (): void => {
         cancelConsumer(context)
           .then(closeChannel)
           .then(disconnectFromBroker)

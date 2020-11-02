@@ -38,39 +38,41 @@ export type MessageConsumer = (msg: amqplib.ConsumeMessage | null) => void;
  *
  * @return {Promise<ConsumeResult>} Consume result which will determine the faith of the message passed to the consumer
  */
-export type ConsumeCallback = (msg: ConsumeMessage) => Promise<ConsumeResult>;
+export type ConsumeCallback = (
+  msg: ConsumeMessage
+) => Promise<ConsumeResult> | ConsumeResult;
 
 type AnyFunction = (...args: any[]) => any;
 
 export function createDefaultChannelEventListeners(
-  log: AnyFunction
+  dbg: AnyFunction = log
 ): Record<string, AnyFunction> {
   const onClose = (serverError?: Error | string): void => {
-    log("Channel#close()");
+    dbg("Channel#close()");
 
-    if (serverError) {
-      log("Received Channel#close() with error", serverError);
+    if (serverError !== undefined) {
+      dbg("Received Channel#close() with error", serverError);
     }
   };
 
   const onError = (err: Error | string): void => {
-    log("Channel#error()", err);
+    dbg("Channel#error()", err);
   };
 
   const onReturn = (msg: ConsumeMessage): void => {
-    log("Channel#return()", msg);
+    dbg("Channel#return()", msg);
   };
 
   const onDrain = (): void => {
-    log("Channel#drain()");
+    dbg("Channel#drain()");
   };
 
   const onBlocked = (reason: string): void => {
-    log("Channel#blocked()", reason);
+    dbg("Channel#blocked()", reason);
   };
 
   const onUnblocked = (reason: string): void => {
-    log("Channel#unblocked()", reason);
+    dbg("Channel#unblocked()", reason);
   };
 
   return {
@@ -181,7 +183,10 @@ export function bindQueueAndExchange(
   binding = "#"
 ): (ctx: IConnectionContext) => Promise<IConnectionContext> {
   return async (context: IConnectionContext): Promise<IConnectionContext> => {
-    if (!context.queueName || !context.exchangeName) {
+    if (
+      typeof context.queueName !== "string" ||
+      typeof context.exchangeName !== "string"
+    ) {
       throw new Error(
         "Cloud not bind queue with exchange, because one of the names is missing"
       );
@@ -246,7 +251,7 @@ export function consume(
   callbackWrapper = wrapMessageHandler
 ): (context: IConnectionContext) => Promise<IConsumerContext> {
   return async (context): Promise<IConsumerContext> => {
-    if (!context.queueName) {
+    if (typeof context.queueName !== "string") {
       throw new Error("Missing queue name");
     }
 
@@ -282,7 +287,7 @@ export async function sendToQueue(
 
   const { channel, queueName } = context;
 
-  if (!queueName) {
+  if (queueName === undefined) {
     throw new Error("Missing queue name");
   }
 
@@ -303,7 +308,7 @@ export async function publish(
 ): Promise<IConnectionContext> {
   log("Publishing message to an exchange: %s", message);
 
-  if (!context.exchangeName) {
+  if (context.exchangeName === undefined) {
     throw new Error("Missing exchange name");
   }
 
@@ -339,14 +344,4 @@ export async function waitForDrain(channel: Channel): Promise<void> {
       resolve();
     });
   });
-}
-
-export function wrapOnMessage(
-  onMessage: AsyncMessageConsumer
-): MessageConsumer {
-  return (msg: amqplib.ConsumeMessage | null): void => {
-    onMessage(msg).catch((err) =>
-      console.log("Error during AMQP message processing", err)
-    );
-  };
 }

@@ -89,10 +89,7 @@ export async function createTestAsQueueProducer(
 ): Promise<IProduceToQueueTest> {
   const { channel, disconnect } = await connect();
 
-  const queue = await channel.assertQueue(
-    options.queueName ?? "",
-    TEMPORARY_ENTITY
-  );
+  const queue = await channel.assertQueue(options.queueName, TEMPORARY_ENTITY);
 
   function sendTestMessage(msg: string): void {
     channel.sendToQueue(queue.queue, Buffer.from(msg));
@@ -111,7 +108,7 @@ export async function connectTestAsConsumer(
   const { channel, disconnect } = await connect();
 
   const queue = await channel.assertQueue(
-    queueOptions.queueName ?? "",
+    queueOptions.queueName,
     TEMPORARY_ENTITY
   );
 

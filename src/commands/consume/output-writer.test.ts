@@ -1,4 +1,4 @@
-import { writeMessageToFile } from "./output-writer";
+import { STDOUT, writeMessageToFile } from "./output-writer";
 import { ConsumeMessage } from "amqplib";
 import fs from "fs";
 
@@ -9,6 +9,6 @@ describe("Output Writer", () => {
     await writeMessageToFile({
       content: Buffer.from("example-message"),
     } as ConsumeMessage);
-    expect(fs.writeFileSync).toBeCalledWith(1, "example-message\n");
+    expect(fs.writeFileSync).toBeCalledWith(STDOUT, "example-message\n");
   });
 });

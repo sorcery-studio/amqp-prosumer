@@ -1,4 +1,3 @@
-import { Command } from "commander";
 import { debug } from "debug";
 import {
   bindQueueAndExchange,
@@ -20,6 +19,7 @@ import {
 } from "../../common";
 import { writeMessageToFile } from "../output-writer";
 import { Options } from "amqplib";
+import { IConsumeFromExchangeCommand } from "./from-exchange.command";
 
 const log = debug("amqp-prosumer:consumer");
 
@@ -31,16 +31,18 @@ function buildDefaultQueueOptions(): Options.AssertQueue {
   };
 }
 
-function buildExchangeOptionsFrom(command: Command): Options.AssertExchange {
+function buildExchangeOptionsFrom(
+  command: IConsumeFromExchangeCommand
+): Options.AssertExchange {
   return {
     durable: command.durable,
-    autoDelete: command.autoDelete,
+    autoDelete: true,
   };
 }
 
 export async function actionConsumeExchange(
   exchangeName: string,
-  command: Command,
+  command: IConsumeFromExchangeCommand,
   onMessage: ConsumeCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
@@ -48,7 +50,7 @@ export async function actionConsumeExchange(
     log("Staring the consumer for exchange", exchangeName);
 
     const registerConsumerShutdown = (context: IConsumerContext): void => {
-      const shutdown = async (): Promise<void> => {
+      const shutdown = (): void => {
         cancelConsumer(context)
           .then(closeChannel)
           .then(disconnectFromBroker)

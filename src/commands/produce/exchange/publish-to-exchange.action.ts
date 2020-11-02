@@ -1,4 +1,3 @@
-import { Command } from "commander";
 import { debug, Debugger } from "debug";
 import { readInputFile } from "../../../utils/io";
 import {
@@ -11,10 +10,13 @@ import {
   publish,
 } from "../../../utils/amqp-adapter";
 import { Options } from "amqplib";
+import { IPublishToExchangeCommand } from "./publish-to-exchange.command";
 
 const logger = debug("amqp-prosumer:producer");
 
-function buildExchangeOptionsFrom(command: Command): Options.AssertExchange {
+function buildExchangeOptionsFrom(
+  command: IPublishToExchangeCommand
+): Options.AssertExchange {
   return {
     durable: command.durable,
     autoDelete: command.autoDelete,
@@ -23,30 +25,41 @@ function buildExchangeOptionsFrom(command: Command): Options.AssertExchange {
 
 type PublishHeaders = { [key: string]: string };
 
-function parseHeaders(command: Command): PublishHeaders {
-  return command.headers?.reduce((prev: PublishHeaders, cur: string) => {
-    const parts = cur.split("=");
+function parseHeaders(command: IPublishToExchangeCommand): PublishHeaders {
+  const parsedHeaders = command.headers?.reduce(
+    (prev: PublishHeaders, cur: string) => {
+      const [name, value] = cur.split("=");
 
-    return {
-      ...prev,
-      [parts[0]]: parts[1],
-    };
-  }, {});
+      return {
+        ...prev,
+        [name]: value,
+      };
+    },
+    {}
+  );
+
+  if (parsedHeaders !== undefined) {
+    return parsedHeaders;
+  } else {
+    return {};
+  }
 }
 
-function buildPublishOptionsFrom(command: Command): Options.Publish {
+function buildPublishOptionsFrom(
+  command: IPublishToExchangeCommand
+): Options.Publish {
   return {
     headers: parseHeaders(command),
   };
 }
 
-export async function actionProduceExchange(
+export function actionProduceExchange(
   exchangeName: string,
-  command: Command,
+  command: IPublishToExchangeCommand,
   readInput = readInputFile,
   sendOutput = publish,
   log: Debugger = logger
-): Promise<void> {
+): void {
   log("Staring the producer action");
 
   const exchangeOptions = buildExchangeOptionsFrom(command);

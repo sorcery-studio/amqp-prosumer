@@ -1,7 +1,7 @@
-import { Command } from "commander";
 import { actionProduceExchange } from "./publish-to-exchange.action";
 import { InputReaderGen } from "../../../utils/io";
 import { connectTestAsConsumer } from "../../../utils/connected-test";
+import { IPublishToExchangeCommand } from "./publish-to-exchange.command";
 
 jest.unmock("amqplib");
 
@@ -9,7 +9,9 @@ const readTestInput: InputReaderGen = function* () {
   yield "test-message";
 };
 
-function createCommand(opts: any): Command {
+function createCommand(
+  opts: Partial<IPublishToExchangeCommand>
+): IPublishToExchangeCommand {
   const baseCommand = {
     durable: false,
     autoDelete: true,
@@ -19,7 +21,7 @@ function createCommand(opts: any): Command {
   return {
     ...baseCommand,
     ...opts,
-  };
+  } as IPublishToExchangeCommand;
 }
 
 describe("Produce To Exchange Action", () => {

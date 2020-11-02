@@ -23,4 +23,9 @@ describe("Produce To Queue Command", () => {
     expect(Object.keys(command.opts())).toContain("durable");
     expect(command.durable).toEqual(false);
   });
+
+  test("it allows to specify if the queue is automatically deleted", () => {
+    expect(Object.keys(command.opts())).toContain("autoDelete");
+    expect(command.autoDelete).toEqual(true);
+  });
 });

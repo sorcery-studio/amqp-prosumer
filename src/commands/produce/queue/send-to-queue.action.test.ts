@@ -1,7 +1,7 @@
-import { Command } from "commander";
 import { actionProduceQueue } from "./send-to-queue.action";
 import { InputReaderGen } from "../../../utils/io";
 import { connectTestAsConsumer } from "../../../utils/connected-test";
+import { ISendToQueueCommand } from "./send-to-queue.command";
 
 jest.unmock("amqplib");
 
@@ -28,7 +28,7 @@ describe("Produce To Queue Action", () => {
       () =>
         actionProduceQueue(
           "test-queue-producer",
-          (cmd as unknown) as Command,
+          cmd as ISendToQueueCommand,
           readInput
         ),
       (text) => {

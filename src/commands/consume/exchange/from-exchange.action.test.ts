@@ -1,7 +1,7 @@
 import { actionConsumeExchange } from "./from-exchange.action";
-import { Command } from "commander";
 import { ConsumeCallback, ConsumeResult } from "../../../utils/amqp-adapter";
 import { connectTestAsExchangeProducer } from "../../../utils/connected-test";
+import { IConsumeFromExchangeCommand } from "./from-exchange.command";
 
 jest.unmock("amqplib");
 
@@ -27,9 +27,7 @@ describe("Consume From Exchange Action Integration Tests", () => {
     const onMessage: ConsumeCallback = async (msg) => {
       expect(msg.content.toString()).toEqual("test-message");
 
-      if (shutdown) {
-        await shutdown();
-      }
+      await shutdown();
 
       done();
 
@@ -38,7 +36,7 @@ describe("Consume From Exchange Action Integration Tests", () => {
 
     const shutdown = await actionConsumeExchange(
       "test-exchange",
-      (cmd as unknown) as Command,
+      (cmd as unknown) as IConsumeFromExchangeCommand,
       onMessage
     );
 

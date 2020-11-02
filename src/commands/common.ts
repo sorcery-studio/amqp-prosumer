@@ -5,13 +5,15 @@ export type CommandFactoryFn = (name?: string | undefined) => Command;
 
 const log = debug("amqp-prosumer:shutdown");
 
+export const EXIT_ERROR_CODE = 1;
+
 export function reportErrorAndExit(err: Error): never {
   // eslint-disable-next-line no-console
   console.error("ERROR:", err.message, err.stack);
-  process.exit(1);
+  process.exit(EXIT_ERROR_CODE);
 }
 
-export type ShutdownHandlerFn = () => Promise<void>;
+export type ShutdownHandlerFn = () => Promise<void> | void;
 
 export type RegisterShutdownHandlerFn = (handler: ShutdownHandlerFn) => void;
 
@@ -34,7 +36,7 @@ function executeShutdown(shutdownFn: () => Promise<void>): () => void {
 export const registerShutdownHandler: RegisterShutdownHandlerFn = (
   handler: ShutdownHandlerFn
 ) => {
-  (async (): Promise<void> => {
+  ((): void => {
     // Each registered handler as its own state
     const shutdown = async (): Promise<void> => {
       log("Running shutdown handler");
@@ -47,7 +49,5 @@ export const registerShutdownHandler: RegisterShutdownHandlerFn = (
     process.once("SIGTERM", executeShutdown(shutdown));
     process.once("uncaughtException", executeShutdown(shutdown));
     process.once("unhandledRejection", executeShutdown(shutdown));
-  })().catch((err) =>
-    console.error("Error during shutdown handler registration", err)
-  );
+  })();
 };

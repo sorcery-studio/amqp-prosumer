@@ -39,4 +39,4 @@ export const connection = {
   close: jest.fn(),
 };
 
-export const connect = jest.fn(async () => connection);
+export const connect = jest.fn(() => connection);

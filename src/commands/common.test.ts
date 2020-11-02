@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { reportErrorAndExit } from "./common";
+import { reportErrorAndExit, EXIT_ERROR_CODE } from "./common";
 
 describe("Common", () => {
   describe("Reporting Error", () => {
@@ -17,7 +17,7 @@ describe("Common", () => {
       reportErrorAndExit(err);
 
       expect(consoleSpy).toBeCalledWith("ERROR:", err.message, err.stack);
-      expect(exitSpy).toBeCalledWith(1);
+      expect(exitSpy).toBeCalledWith(EXIT_ERROR_CODE);
     });
   });
 });
