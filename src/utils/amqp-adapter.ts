@@ -5,6 +5,7 @@
 import { debug } from "debug";
 import * as amqplib from "amqplib";
 import { Channel, Connection, ConsumeMessage, Options } from "amqplib";
+import { ExchangeType } from "../types";
 
 const log = debug("amqp-prosumer:amqp-adapter");
 
@@ -163,7 +164,7 @@ export function declareQueue(
 
 export function declareExchange(
   exchangeName: string,
-  type: string,
+  type: ExchangeType,
   options: Options.AssertExchange,
   assert: boolean
 ): (context: IConnectionContext) => Promise<IConnectionContext> {

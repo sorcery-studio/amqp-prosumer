@@ -1,5 +1,6 @@
 import * as amqp from "amqplib";
 import { Channel } from "amqplib";
+import { ExchangeType } from "../types";
 
 interface IConnectedTest {
   disconnectTestFromBroker(): Promise<void>;
@@ -22,7 +23,7 @@ interface IConsumerTest extends IConnectedTest {
 
 interface IProduceToExchangeOptions {
   exchangeName: string;
-  exchangeType: string;
+  exchangeType: ExchangeType;
   routingKey: string;
 }
 
