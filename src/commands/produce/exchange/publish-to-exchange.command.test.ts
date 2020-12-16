@@ -42,4 +42,9 @@ describe("Produce To Exchange Command", () => {
     expect(options).toContain("headers");
     expect(command.headers).toBeUndefined();
   });
+
+  test("it allows to specify if publisher-confirms should be used", () => {
+    expect(options).toContain("confirm");
+    expect(command.confirm).toEqual(false);
+  });
 });

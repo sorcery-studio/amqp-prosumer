@@ -1,29 +1,35 @@
 import { Command } from "commander";
 import { debug } from "debug";
+import { EventEmitter } from "events";
 
 export type CommandFactoryFn = (name?: string | undefined) => Command;
+
+/**
+ * Represents an object which can receive the "exit" call and will break the execution immediately
+ */
+export interface ExitReceiver {
+  exit: (code?: number) => never;
+}
 
 const log = debug("amqp-prosumer:shutdown");
 
 export const EXIT_ERROR_CODE = 1;
 
-export function reportErrorAndExit(err: Error): never {
+export function reportErrorAndExit(
+  err: Error,
+  receiver: ExitReceiver = process
+): never {
   // eslint-disable-next-line no-console
   console.error("ERROR:", err.message, err.stack);
-  process.exit(EXIT_ERROR_CODE);
+  receiver.exit(EXIT_ERROR_CODE);
 }
 
-export type ShutdownHandlerFn = () => Promise<void> | void;
+export type ShutdownHandlerFn = () => Promise<void>;
 
-export type RegisterShutdownHandlerFn = (handler: ShutdownHandlerFn) => void;
-
-function executeShutdown(shutdownFn: () => Promise<void>): () => void {
-  return (): void => {
-    shutdownFn().catch((err) =>
-      console.error("Issue during execution of the shutdown function", err)
-    );
-  };
-}
+export type RegisterShutdownHandlerFn = (
+  handler: ShutdownHandlerFn,
+  emitter?: EventEmitter
+) => void;
 
 /**
  * Register a handler function which will be called for SIGINT/SIGTERM or on error conditions
@@ -32,22 +38,29 @@ function executeShutdown(shutdownFn: () => Promise<void>): () => void {
  * in order to get closed. This function helps in implementing this behaviour
  *
  * @param handler The function which should be executed upon supported event
+ * @param emitter The instance of event emitter to which the shutdown handler should be bound
  */
 export const registerShutdownHandler: RegisterShutdownHandlerFn = (
-  handler: ShutdownHandlerFn
+  handler: ShutdownHandlerFn,
+  emitter: EventEmitter = process
 ) => {
   ((): void => {
-    // Each registered handler as its own state
-    const shutdown = async (): Promise<void> => {
+    const shutdown = (): void => {
       log("Running shutdown handler");
-      await handler();
-      log("Shutdown handler complete");
+      handler()
+        .then(() => log("Shutdown handler complete"))
+        .catch((err) =>
+          console.error(
+            "Error during shutdown handler execution: %s",
+            err.message
+          )
+        );
     };
 
-    process.once("disconnect", executeShutdown(shutdown));
-    process.once("SIGINT", executeShutdown(shutdown));
-    process.once("SIGTERM", executeShutdown(shutdown));
-    process.once("uncaughtException", executeShutdown(shutdown));
-    process.once("unhandledRejection", executeShutdown(shutdown));
+    emitter.once("disconnect", shutdown);
+    emitter.once("SIGINT", shutdown);
+    emitter.once("SIGTERM", shutdown);
+    emitter.once("uncaughtException", shutdown);
+    emitter.once("unhandledRejection", shutdown);
   })();
 };

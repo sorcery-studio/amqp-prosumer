@@ -50,12 +50,13 @@ export async function actionConsumeExchange(
     log("Staring the consumer for exchange", exchangeName);
 
     const registerConsumerShutdown = (context: IConsumerContext): void => {
-      const shutdown = (): void => {
-        cancelConsumer(context)
+      const shutdown: ShutdownHandlerFn = () => {
+        return cancelConsumer(context)
           .then(closeChannel)
           .then(disconnectFromBroker)
           .catch((err) => console.error("Error during shutdown", err));
       };
+
       regShutdown(shutdown);
       resolve(shutdown);
     };

@@ -8,6 +8,7 @@
     * `exchangeType` which allows setting the type of the exchange
     * `routingKey` which allows setting the routing key for published messages
     * `headers`(variadic) which allows setting the headers for published messages
+* Publishing to exchange and queue supports `confirm` parameter - if provided, all the messages will be requiring confirmation from the broker.
 
 ## [1.0.0] - 2020-10-25
 

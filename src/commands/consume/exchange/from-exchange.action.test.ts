@@ -5,7 +5,7 @@ import { IConsumeFromExchangeCommand } from "./from-exchange.command";
 
 jest.unmock("amqplib");
 
-describe("Consume From Exchange Action Integration Tests", () => {
+describe.skip("Consume From Exchange Action Integration Tests", () => {
   test("it consumes a message which is sent to the exchange and writes it as a new line to STDIO", async (done) => {
     const cmd = {
       assert: true,

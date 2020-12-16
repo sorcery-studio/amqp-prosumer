@@ -37,7 +37,7 @@ interface IConsumeQueueOptions {
 
 interface IBindToExchangeOptions {
   exchangeName: string;
-  exchangeType: "topic" | "direct" | "fanout" | "headers";
+  exchangeType: ExchangeType;
   routingKey: string;
   bindArgs?: any;
 }

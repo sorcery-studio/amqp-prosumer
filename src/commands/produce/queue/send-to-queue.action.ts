@@ -3,10 +3,13 @@ import {
   closeChannel,
   connectToBroker,
   createChannel,
+  createConfirmChannel,
   declareQueue,
   disconnectFromBroker,
   IConnectionContext,
+  MessageProduceFn,
   sendToQueue,
+  sendToQueueConfirmed,
 } from "../../../utils/amqp-adapter";
 import { readInputFile } from "../../../utils/io";
 import { Options } from "amqplib";
@@ -27,7 +30,6 @@ export function actionProduceQueue(
   queueName: string,
   command: ISendToQueueCommand,
   readInput = readInputFile,
-  sendOutput = sendToQueue,
   log: Debugger = logger
 ): void {
   log("Staring the producer action");
@@ -38,7 +40,7 @@ export function actionProduceQueue(
     command.assert
   );
 
-  const sendMessages = async (
+  const sendMessages = (sendOutput: MessageProduceFn) => async (
     context: IConnectionContext
   ): Promise<IConnectionContext> => {
     if (typeof context.queueName !== "string") {
@@ -53,9 +55,9 @@ export function actionProduceQueue(
   };
 
   connectToBroker(command.url)
-    .then(createChannel)
+    .then(command.confirm ? createConfirmChannel : createChannel)
     .then(setupQueue)
-    .then(sendMessages)
+    .then(sendMessages(command.confirm ? sendToQueue : sendToQueueConfirmed))
     .then(closeChannel)
     .then(disconnectFromBroker)
     .then(() => log("Produce action executed successfully"))

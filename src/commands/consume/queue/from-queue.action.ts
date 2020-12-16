@@ -52,12 +52,13 @@ export async function actionConsumeQueue(
 
     const registerConsumerShutdown = (context: IConsumerContext): void => {
       log("Consumer started %s", context.consumerTag);
-      const handler = (): void => {
-        cancelConsumer(context)
+      const handler: ShutdownHandlerFn = () => {
+        return cancelConsumer(context)
           .then(closeChannel)
           .then(disconnectFromBroker)
           .catch((err) => console.error("Error during shutdown", err));
       };
+
       regShutdown(handler);
       resolve(handler);
     };
@@ -70,7 +71,7 @@ export async function actionConsumeQueue(
       .then(consume(onMessage)) // Note: OnMessage could actually be done on rxjs, but that's not the goal of the project
       .then(registerConsumerShutdown)
       .catch((err) => {
-        console.error("Error during queue consumption", err);
+        console.error("The consume action encountered an error", err);
         reject(err);
       });
   });

@@ -4,6 +4,7 @@ import {
   closeChannel,
   connectToBroker,
   createChannel,
+  createConfirmChannel,
   declareExchange,
   disconnectFromBroker,
   IConnectionContext,
@@ -83,7 +84,7 @@ export function actionProduceExchange(
   );
 
   connectToBroker(command.url)
-    .then(createChannel)
+    .then(command.confirm ? createConfirmChannel : createChannel)
     .then(setupExchange)
     .then(sendMessages)
     .then(closeChannel)

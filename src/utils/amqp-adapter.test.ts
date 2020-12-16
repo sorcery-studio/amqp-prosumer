@@ -6,6 +6,7 @@ import {
   consume,
   ConsumeResult,
   createChannel,
+  createConfirmChannel,
   createDefaultChannelEventListeners,
   declareExchange,
   declareQueue,
@@ -13,22 +14,24 @@ import {
   IConnectionContext,
   publish,
   sendToQueue,
+  sendToQueueConfirmed,
   wrapMessageHandler,
 } from "./amqp-adapter";
 import * as amqp from "amqplib";
-import { Channel, Connection, ConsumeMessage } from "amqplib";
+import { Channel, ConfirmChannel, Connection, ConsumeMessage } from "amqplib";
 import { mock, MockProxy } from "jest-mock-extended";
 
-interface MockedIConnectionContext extends IConnectionContext {
-  channel: MockProxy<Channel>;
+interface MockedIConnectionContext<T extends Channel>
+  extends IConnectionContext {
+  channel: MockProxy<T>;
   connection: MockProxy<Connection>;
 }
 
-function getCtx(
-  ext: Partial<MockedIConnectionContext> = {}
-): MockedIConnectionContext {
+function getCtx<T extends Channel = Channel>(
+  ext: Partial<MockedIConnectionContext<T>> = {}
+): MockedIConnectionContext<T> {
   return {
-    channel: mock<Channel>(),
+    channel: mock<T>(),
     connection: mock<Connection>(),
     ...ext,
   };
@@ -65,15 +68,14 @@ describe("AMQP FP Adapter", () => {
     });
   });
 
-  describe("Create channel function", () => {
-    test("It creates new channel for the provided connection, binds events callbacks and provides back connection context", async () => {
-      const mockConnection = mock<Connection>();
-      const mockChannel = mock<Channel>();
-
-      mockConnection.createChannel.mockResolvedValueOnce(mockChannel);
-
-      const ctx = await createChannel(mockConnection);
-
+  describe("Channel API", () => {
+    function assertProperChannelSetup(
+      ctx: IConnectionContext,
+      mockConnection: MockProxy<Connection> & Connection,
+      mockChannel:
+        | (MockProxy<Channel> & Channel)
+        | (MockProxy<ConfirmChannel> & ConfirmChannel)
+    ): void | never {
       expect(ctx.connection).toEqual(mockConnection);
       expect(ctx.channel).toEqual(mockChannel);
 
@@ -88,6 +90,32 @@ describe("AMQP FP Adapter", () => {
 
       events.forEach((event) => {
         expect(mockChannel.on).toBeCalledWith(event, expect.any(Function));
+      });
+    }
+
+    describe("Create channel function", () => {
+      test("It creates new channel for the provided connection, binds events callbacks and provides back connection context", async () => {
+        const mockConnection = mock<Connection>();
+        const mockChannel = mock<Channel>();
+
+        mockConnection.createChannel.mockResolvedValueOnce(mockChannel);
+
+        const ctx = await createChannel(mockConnection);
+
+        assertProperChannelSetup(ctx, mockConnection, mockChannel);
+      });
+    });
+
+    describe("Create confirm channel function", () => {
+      test("It creates new confirm-channel for the provided connection, binds events callbacks and provides connection context", async () => {
+        const mockConnection = mock<Connection>();
+        const mockChannel = mock<ConfirmChannel>();
+
+        mockConnection.createConfirmChannel.mockResolvedValueOnce(mockChannel);
+
+        const ctx = await createConfirmChannel(mockConnection);
+
+        assertProperChannelSetup(ctx, mockConnection, mockChannel);
       });
     });
   });
@@ -207,7 +235,7 @@ describe("AMQP FP Adapter", () => {
     });
 
     test.each(["queueName", "exchangeName"])(
-      "It throws an exception when the context is missing %s property",
+      "It rejects with an exception when the context is missing %s property",
       async (undefProp) => {
         const correctCtx = getCtx({
           queueName: "test-queue",
@@ -285,9 +313,6 @@ describe("AMQP FP Adapter", () => {
 
       const wrapped = wrapMessageHandler(channel, onMessage);
 
-      // ToDo: Investigate
-      //  PrettyFormatPluginError: tagName.includes is not a function
-      //  TypeError: tagName.includes is not a function
       const msg = mock<ConsumeMessage>();
       await wrapped(msg);
 
@@ -319,9 +344,6 @@ describe("AMQP FP Adapter", () => {
       await expect(wrapped(msg)).rejects.toThrow("Internal Error");
 
       expect(onMessage).toBeCalledWith(msg);
-      // ToDo: Investigate
-      //  PrettyFormatPluginError: tagName.includes is not a function
-      //  TypeError: tagName.includes is not a function
       expect(channel.ack).toBeCalledWith(msg);
     });
   });
@@ -432,6 +454,7 @@ describe("AMQP FP Adapter", () => {
         "test-queue-name",
         expect.any(Buffer)
       );
+
       expect(ret).toBe(ctx);
     });
 
@@ -456,7 +479,7 @@ describe("AMQP FP Adapter", () => {
       expect(ret).toBe(ctx);
     });
 
-    test("It throws Error when the queue name is not provided", async () => {
+    test("It rejects with Error when the queue name is not provided", async () => {
       const ctx = getCtx({
         queueName: undefined,
       });
@@ -469,6 +492,76 @@ describe("AMQP FP Adapter", () => {
       );
 
       expect(ctx.channel.sendToQueue).not.toBeCalled();
+    });
+  });
+
+  describe("Send to queue with confirmation", () => {
+    test("It sends the message to the queue passed in the context", async () => {
+      const ctx = getCtx<ConfirmChannel>({
+        queueName: "test-queue-name",
+      });
+      const message = "test-message";
+
+      ctx.channel.sendToQueue.mockImplementation(
+        (_queueName, _buffer, _options, callback) => {
+          if (callback) {
+            callback(undefined, {});
+          }
+          return true;
+        }
+      );
+
+      const ret = await sendToQueueConfirmed(ctx, message);
+
+      expect(ctx.channel.sendToQueue).toBeCalledWith(
+        "test-queue-name",
+        expect.any(Buffer),
+        {},
+        expect.any(Function)
+      );
+
+      expect(ret).toBe(ctx);
+    });
+
+    test("It rejects with Error when the queue name is not provided", async () => {
+      const ctx = getCtx<ConfirmChannel>({
+        queueName: undefined,
+      });
+      const message = "test-message";
+
+      ctx.channel.sendToQueue.mockReturnValue(true);
+
+      await expect(sendToQueueConfirmed(ctx, message)).rejects.toThrow(
+        "Missing queue name"
+      );
+
+      expect(ctx.channel.sendToQueue).not.toBeCalled();
+    });
+
+    test("It rejects with Error when the the server will nack the message", async () => {
+      const ctx = getCtx<ConfirmChannel>({
+        queueName: "test-queue-name",
+      });
+      const message = "test-message";
+
+      const err = new Error("The server nacked the message");
+      ctx.channel.sendToQueue.mockImplementation(
+        (_queueName, _buffer, _options, callback) => {
+          if (callback) {
+            callback(err, {});
+          }
+          return true;
+        }
+      );
+
+      await expect(sendToQueueConfirmed(ctx, message)).rejects.toThrow(err);
+
+      expect(ctx.channel.sendToQueue).toBeCalledWith(
+        "test-queue-name",
+        expect.any(Buffer),
+        {},
+        expect.any(Function)
+      );
     });
   });
 

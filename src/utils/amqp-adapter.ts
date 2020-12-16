@@ -4,7 +4,13 @@
 
 import { debug } from "debug";
 import * as amqplib from "amqplib";
-import { Channel, Connection, ConsumeMessage, Options } from "amqplib";
+import {
+  Channel,
+  ConfirmChannel,
+  Connection,
+  ConsumeMessage,
+  Options,
+} from "amqplib";
 import { ExchangeType } from "../types";
 
 const log = debug("amqp-prosumer:amqp-adapter");
@@ -16,7 +22,7 @@ export enum ConsumeResult {
 }
 
 export interface IConnectionContext {
-  readonly channel: Channel;
+  readonly channel: Channel | ConfirmChannel;
   readonly connection: Connection;
   readonly queueName?: string;
   readonly exchangeName?: string;
@@ -25,10 +31,6 @@ export interface IConnectionContext {
 export interface IConsumerContext extends IConnectionContext {
   readonly consumerTag: string;
 }
-
-export type AsyncMessageConsumer = (
-  msg: amqplib.ConsumeMessage | null
-) => Promise<void>;
 
 export type MessageConsumer = (msg: amqplib.ConsumeMessage | null) => void;
 
@@ -100,14 +102,10 @@ export function disconnectFromBroker(connection: Connection): Promise<void> {
   return connection.close();
 }
 
-export async function createChannel(
-  connection: amqplib.Connection,
+function attachListeners(
+  channel: Channel,
   eventListeners: Record<string, AnyFunction> = {}
-): Promise<IConnectionContext> {
-  log("Creating new channel");
-  const channel = await connection.createChannel();
-  log("Channel created");
-
+): void {
   const defaultListeners = createDefaultChannelEventListeners(log);
 
   Object.entries({
@@ -116,6 +114,33 @@ export async function createChannel(
   }).forEach(([event, listener]) => {
     channel.on(event, listener);
   });
+}
+
+export async function createChannel(
+  connection: amqplib.Connection,
+  eventListeners: Record<string, AnyFunction> = {}
+): Promise<IConnectionContext> {
+  log("Creating new channel");
+  const channel = await connection.createChannel();
+  log("Channel created");
+
+  attachListeners(channel, eventListeners);
+
+  return {
+    channel,
+    connection,
+  };
+}
+
+export async function createConfirmChannel(
+  connection: amqplib.Connection,
+  eventListeners: Record<string, AnyFunction> = {}
+): Promise<IConnectionContext> {
+  log("Creating new channel");
+  const channel = await connection.createConfirmChannel();
+  log("Channel created");
+
+  attachListeners(channel, eventListeners);
 
   return {
     channel,
@@ -280,10 +305,15 @@ export async function cancelConsumer(
   return context;
 }
 
-export async function sendToQueue(
+export type MessageProduceFn = (
   context: IConnectionContext,
   message: string
-): Promise<IConnectionContext> {
+) => Promise<IConnectionContext>;
+
+export const sendToQueue: MessageProduceFn = async (
+  context: IConnectionContext,
+  message: string
+): Promise<IConnectionContext> => {
   log("Sending message to queue: %s", message);
 
   const { channel, queueName } = context;
@@ -299,7 +329,32 @@ export async function sendToQueue(
   }
 
   return context;
-}
+};
+
+export const sendToQueueConfirmed: MessageProduceFn = (
+  context: IConnectionContext,
+  message: string
+): Promise<IConnectionContext> => {
+  return new Promise((resolve, reject) => {
+    log("Sending message to queue: %s", message);
+
+    const { channel, queueName } = context;
+
+    if (queueName === undefined) {
+      throw new Error("Missing queue name");
+    }
+
+    const confirmCallback = (err?: Error): void => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(context);
+      }
+    };
+
+    channel.sendToQueue(queueName, Buffer.from(message), {}, confirmCallback);
+  });
+};
 
 export async function publish(
   context: IConnectionContext,

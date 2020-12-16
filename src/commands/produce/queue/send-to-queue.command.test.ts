@@ -9,23 +9,30 @@ describe("Produce To Queue Command", () => {
     expect(command.description()).toEqual("Sends messages to a defined queue");
   });
 
+  const options = Object.keys(command.opts());
+
   test("it defines the 'url' option, default 'amqp://localhost'", () => {
-    expect(Object.keys(command.opts())).toContain("url");
+    expect(options).toContain("url");
     expect(command.url).toEqual("amqp://localhost");
   });
 
   test("it allows to perform an assertion of a queue", () => {
-    expect(Object.keys(command.opts())).toContain("assert");
+    expect(options).toContain("assert");
     expect(command.assert).toEqual(false);
   });
 
   test("it allows to specify if the queue is 'durable", () => {
-    expect(Object.keys(command.opts())).toContain("durable");
+    expect(options).toContain("durable");
     expect(command.durable).toEqual(false);
   });
 
   test("it allows to specify if the queue is automatically deleted", () => {
-    expect(Object.keys(command.opts())).toContain("autoDelete");
+    expect(options).toContain("autoDelete");
     expect(command.autoDelete).toEqual(true);
+  });
+
+  test("it allows to specify if publisher-confirms should be used", () => {
+    expect(options).toContain("confirm");
+    expect(command.confirm).toEqual(false);
   });
 });

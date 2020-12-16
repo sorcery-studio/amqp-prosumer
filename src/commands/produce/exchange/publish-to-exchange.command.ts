@@ -10,6 +10,7 @@ export interface IPublishToExchangeCommand extends Command {
   routingKey: string;
   autoDelete: boolean;
   headers?: string[];
+  confirm: boolean;
 }
 
 export function buildPublishToExchangeCommand(): IPublishToExchangeCommand {
@@ -43,6 +44,11 @@ export function buildPublishToExchangeCommand(): IPublishToExchangeCommand {
       ""
     )
     .option("--headers <header...>", "Set the following headers on the message")
+    .option(
+      "--confirm",
+      "Use publisher confirms to wait for the broker to confirm if the message was handled",
+      false
+    )
     .action((exchangeName: string, options: IPublishToExchangeCommand) => {
       try {
         actionProduceExchange(exchangeName, options);

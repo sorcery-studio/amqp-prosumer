@@ -1,23 +1,78 @@
 /* eslint-disable no-console */
-import { reportErrorAndExit, EXIT_ERROR_CODE } from "./common";
+import {
+  reportErrorAndExit,
+  EXIT_ERROR_CODE,
+  ShutdownHandlerFn,
+  registerShutdownHandler,
+  ExitReceiver,
+} from "./common";
+import { EventEmitter } from "events";
 
 describe("Common", () => {
-  describe("Reporting Error", () => {
+  describe("Reporting Error & Exiting", () => {
     test("it logs the error on console and exits", () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const exitSpy = jest.spyOn(process, "exit");
-      exitSpy.mockImplementation(undefined);
+      const NUM_ASSERTIONS = 2;
+      expect.assertions(NUM_ASSERTIONS);
+
+      const exitReceiver = ({
+        exit: jest.fn(),
+      } as unknown) as ExitReceiver;
 
       const consoleSpy = jest.spyOn(console, "error");
-      consoleSpy.mockImplementation(undefined);
+      consoleSpy.mockImplementation();
 
       const err = new Error("Example Error");
 
-      reportErrorAndExit(err);
+      reportErrorAndExit(err, exitReceiver);
 
       expect(consoleSpy).toBeCalledWith("ERROR:", err.message, err.stack);
-      expect(exitSpy).toBeCalledWith(EXIT_ERROR_CODE);
+      expect(exitReceiver.exit).toBeCalledWith(EXIT_ERROR_CODE);
     });
+  });
+
+  describe("Registering shutdown handlers", () => {
+    test.each([
+      "SIGTERM",
+      "SIGINT",
+      "disconnect",
+      "unhandledRejection",
+      "uncaughtException",
+    ])(
+      "A handler can be registered and will get executed on %s event",
+      (event) => {
+        const handler: ShutdownHandlerFn = jest.fn(() => {
+          return Promise.resolve();
+        });
+
+        const emitter = new EventEmitter();
+
+        registerShutdownHandler(handler, emitter);
+
+        emitter.emit(event);
+
+        expect(handler).toBeCalled();
+      }
+    );
+  });
+
+  test("Logs an error when the handler would reject with an error", async () => {
+    const errorSpy = jest.spyOn(console, "error");
+
+    const handler: ShutdownHandlerFn = jest.fn(() => {
+      return Promise.reject(new Error("Something bad happened"));
+    });
+
+    const emitter = new EventEmitter();
+
+    registerShutdownHandler(handler, emitter);
+
+    emitter.emit("SIGTERM");
+
+    expect(handler).toBeCalled();
+    await expect(handler).rejects.toThrow("Something bad happened");
+    expect(errorSpy).toBeCalledWith(
+      "Error during shutdown handler execution: %s",
+      "Something bad happened"
+    );
   });
 });
