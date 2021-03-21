@@ -10,18 +10,15 @@ The tool provides `--help` information for you to get started. Please refer to t
 
 ## Use cases
 
-[TOC]
-
-1. [Publishing messages to an exchange][pub-exchange]
-2. [Publishing messages directly to a queue][pub-queue]
-3. [Consuming messages "from an exchange"][cons-exchange]
-4. [Consuming messages from a queue][cons-queue]
+1. [Publishing messages to an exchange](#publishing-messages-to-an-exchange)
+2. [Publishing messages directly to a queue](#publishing-messages-to-a-queue)
+3. [Consuming messages "from an exchange"](#consuming-messages-from-an-exchange)
+4. [Consuming messages from a queue](#consuming-messages-from-a-queue)
 
 ## Usage
 
 ### Producer
 
-[pub-exchange]
 #### Publishing messages to an exchange
 
 In order to produce a series of messages to a `topic` exchange:
@@ -38,7 +35,6 @@ echo "MessageToSend" | amqp-prosumer produce exchange ExampleExchange
 
 **NOTE:** For convenience, commands have been provided with aliases - in the examples above `produce exchange` and `produce publish-to-exchange` are the very same command. Feel free to chose form which suits you the most.
 
-[pub-queue]
 #### Publishing messages to a queue
 
 ```bash
@@ -47,7 +43,6 @@ cat messages.txt | amqp-prosumer produce send-to-queue ExampleQueue
 
 ### Consumer
 
-[cons-exchange]
 #### Consuming messages from an exchange
 
 In order to consume a message from an exchange
@@ -56,7 +51,6 @@ In order to consume a message from an exchange
 amqp-prosumer consume from-exchange ExampleExchange > output.txt
 ```
 
-[cons-queue]
 #### Consuming messages from a queue
 
 ```bash
