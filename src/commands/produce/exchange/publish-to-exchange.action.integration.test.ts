@@ -28,7 +28,7 @@ function createCommand(
   } as IPublishToExchangeCommand;
 }
 
-describe.skip("Produce To Exchange Action", () => {
+describe("Produce To Exchange Action", () => {
   test("it sends a message to the appointed exchange (topic)", async (done) => {
     const exchangeType = "topic";
     const routingKey = "some-topic";

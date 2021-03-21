@@ -5,7 +5,11 @@ import { IConsumeFromExchangeCommand } from "./from-exchange.command";
 
 jest.unmock("amqplib");
 
-describe.skip("Consume From Exchange Action Integration Tests", () => {
+process.on("unhandledRejection", (rej) => {
+  console.error(rej);
+});
+
+describe("Consume From Exchange Action Integration Tests", () => {
   test("it consumes a message which is sent to the exchange and writes it as a new line to STDIO", async (done) => {
     const cmd = {
       assert: true,
@@ -24,12 +28,20 @@ describe.skip("Consume From Exchange Action Integration Tests", () => {
       exchangeType: "topic",
     });
 
-    const onMessage: ConsumeCallback = async (msg) => {
+    const onMessage: ConsumeCallback = (msg) => {
       expect(msg.content.toString()).toEqual("test-message");
 
-      await shutdown();
-
       done();
+
+      // Close the connection after you ACK the message to not run into channel closed issue
+      setTimeout(() => {
+        shutdown().catch((err) =>
+          console.log(
+            "Error while shutting down the AMQP connection from the test",
+            err
+          )
+        );
+      });
 
       return ConsumeResult.ACK;
     };
@@ -41,6 +53,7 @@ describe.skip("Consume From Exchange Action Integration Tests", () => {
     );
 
     publishTestMessage("test-message");
+
     await disconnectTestFromBroker();
   });
 });

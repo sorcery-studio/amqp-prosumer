@@ -1,5 +1,9 @@
 import { buildConsumeFromExchangeCommand } from "./from-exchange.command";
 
+process.on("unhandledRejection", (rej) => {
+  console.error(rej);
+});
+
 describe("Consume From Exchange Command", () => {
   const command = buildConsumeFromExchangeCommand();
 

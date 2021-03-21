@@ -5,7 +5,7 @@ import { ISendToQueueCommand } from "./send-to-queue.command";
 
 jest.unmock("amqplib");
 
-describe.skip("Produce To Queue Action Tests", () => {
+describe("Produce To Queue Action Tests", () => {
   async function runAndAssert(
     cmd: ISendToQueueCommand,
     done: jest.DoneCallback
@@ -23,13 +23,12 @@ describe.skip("Produce To Queue Action Tests", () => {
 
     await runAndListenForMessage(
       () => actionProduceQueue("test-queue-producer", cmd, readInput),
-      (text) => {
+      async (text) => {
         expect(text).toEqual("test-message");
         done();
+        await disconnectTestFromBroker();
       }
     );
-
-    await disconnectTestFromBroker();
   }
 
   test("it sends a message to the appointed queue", async (done) => {
