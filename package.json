@@ -22,7 +22,7 @@
     "postbuild": "cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "rimraf dist/",
     "test": "jest src/ --detectOpenHandles --forceExit",
-    "test:coverage": "jest src/ --collectCoverage --detectOpenHandles --no-cache",
+    "test:coverage": "jest src/ --collectCoverage --detectOpenHandles --forceExit --no-cache",
     "test:badges": "npm run test:coverage && jest-coverage-badges",
     "pretest:build": "npm run build",
     "test:build": "cd dist/ && jest src/",
