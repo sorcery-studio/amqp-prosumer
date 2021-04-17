@@ -8,6 +8,13 @@ AMQP-based Consumer/Producer tool
 
 The tool provides `--help` information for you to get started. Please refer to the `--help` of each and every command for more details.
 
+## Use cases
+
+1. [Publishing messages to an exchange](#publishing-messages-to-an-exchange)
+2. [Publishing messages directly to a queue](#publishing-messages-to-a-queue)
+3. [Consuming messages "from an exchange"](#consuming-messages-from-an-exchange)
+4. [Consuming messages from a queue](#consuming-messages-from-a-queue)
+
 ## Usage
 
 ### Producer
@@ -28,7 +35,7 @@ echo "MessageToSend" | amqp-prosumer produce exchange ExampleExchange
 
 **NOTE:** For convenience, commands have been provided with aliases - in the examples above `produce exchange` and `produce publish-to-exchange` are the very same command. Feel free to chose form which suits you the most.
 
-#### Producing messages to a queue
+#### Publishing messages to a queue
 
 ```bash
 cat messages.txt | amqp-prosumer produce send-to-queue ExampleQueue
