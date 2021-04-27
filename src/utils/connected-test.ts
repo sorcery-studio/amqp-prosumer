@@ -1,5 +1,5 @@
 import * as amqp from "amqplib";
-import { Channel } from "amqplib";
+import { Channel, ConsumeMessage } from "amqplib";
 import { ExchangeType } from "../types";
 
 interface IConnectedTest {
@@ -129,27 +129,40 @@ export async function connectTestAsConsumer(
   }
 
   function runAndListenForMessage(
-    when: () => Promise<void> | void,
-    then: (message: string) => void
+    actionToRun: () => Promise<void> | void,
+    assertionsToMake: (message: string) => void
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      channel
-        .consume(queue.queue, (msg) => {
-          if (msg === null) {
-            reject(new Error("The expected message did not arrive"));
-            return;
-          }
+      const onMessage = (msg: ConsumeMessage | null): void => {
+        if (msg === null) {
+          reject(new Error("The expected message did not arrive"));
+          return;
+        }
 
-          then(msg.content.toString());
-          resolve();
-        })
-        .then(() => when())
+        channel.ack(msg);
+
+        channel
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          .cancel(msg.fields.consumerTag)
+          .then(() => {
+            assertionsToMake(msg.content.toString());
+            resolve();
+          })
+          .catch((err) => reject(err));
+      };
+
+      channel
+        .consume(queue.queue, onMessage)
+        .then(actionToRun)
         .catch((err) => reject(err));
     });
   }
 
   return {
-    disconnectTestFromBroker: disconnect,
+    disconnectTestFromBroker: async (): Promise<void> => {
+      await disconnect();
+    },
     runAndListenForMessage,
   };
 }

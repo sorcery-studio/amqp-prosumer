@@ -57,7 +57,7 @@ export function actionProduceQueue(
   connectToBroker(command.url)
     .then(command.confirm ? createConfirmChannel : createChannel)
     .then(setupQueue)
-    .then(sendMessages(command.confirm ? sendToQueue : sendToQueueConfirmed))
+    .then(sendMessages(command.confirm ? sendToQueueConfirmed : sendToQueue))
     .then(closeChannel)
     .then(disconnectFromBroker)
     .then(() => log("Produce action executed successfully"))

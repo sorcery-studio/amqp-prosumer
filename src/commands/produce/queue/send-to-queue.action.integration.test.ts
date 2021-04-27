@@ -17,6 +17,7 @@ describe("Produce To Queue Action Tests", () => {
       queueName: "test-queue-producer",
     });
 
+    // eslint-disable-next-line require-yield
     const readInput: InputReaderGen = function* () {
       yield "test-message";
     };
@@ -25,8 +26,8 @@ describe("Produce To Queue Action Tests", () => {
       () => actionProduceQueue("test-queue-producer", cmd, readInput),
       async (text) => {
         expect(text).toEqual("test-message");
-        done();
         await disconnectTestFromBroker();
+        done();
       }
     );
   }

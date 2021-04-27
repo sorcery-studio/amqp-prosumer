@@ -11,40 +11,31 @@ describe("Produce To Exchange Command", () => {
     );
   });
 
-  const options = Object.keys(command.opts());
-
   test("it defines the 'url' option, default 'amqp://localhost'", () => {
-    expect(options).toContain("url");
-    expect(command.url).toEqual("amqp://localhost");
+    expect(command).commandToHaveOption("url", "amqp://localhost");
   });
 
   test("it allows to perform an assertion of a exchange, default false", () => {
-    expect(options).toContain("assert");
-    expect(command.assert).toEqual(false);
+    expect(command).commandToHaveOption("assert", false);
   });
 
   test("it allows to specify if the exchange is durable, default false", () => {
-    expect(options).toContain("durable");
-    expect(command.durable).toEqual(false);
+    expect(command).commandToHaveOption("durable", false);
   });
 
   test("it allows to specify the type of the exchange, default 'topic'", () => {
-    expect(options).toContain("exchangeType");
-    expect(command.exchangeType).toEqual("topic");
+    expect(command).commandToHaveOption("exchangeType", "topic");
   });
 
   test("it allows to specify the routing key to use while publishing, default ''", () => {
-    expect(options).toContain("routingKey");
-    expect(command.routingKey).toEqual("");
+    expect(command).commandToHaveOption("routingKey", "");
   });
 
   test("it allows to specify the headers which will be set on the published message", () => {
-    expect(options).toContain("headers");
-    expect(command.headers).toBeUndefined();
+    expect(command).not.commandToHaveOption("headers");
   });
 
   test("it allows to specify if publisher-confirms should be used", () => {
-    expect(options).toContain("confirm");
-    expect(command.confirm).toEqual(false);
+    expect(command).commandToHaveOption("confirm", false);
   });
 });

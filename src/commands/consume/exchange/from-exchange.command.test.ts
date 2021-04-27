@@ -15,17 +15,14 @@ describe("Consume From Exchange Command", () => {
   });
 
   test("it defines the 'url' option, default 'amqp://localhost'", () => {
-    expect(Object.keys(command.opts())).toContain("url");
-    expect(command.url).toEqual("amqp://localhost");
+    expect(command).commandToHaveOption("url", "amqp://localhost");
   });
 
   test("it allows to perform an assertion of a exchange", () => {
-    expect(Object.keys(command.opts())).toContain("assert");
-    expect(command.assert).toEqual(false);
+    expect(command).commandToHaveOption("assert", false);
   });
 
   test("it allows to specify if the exchange is 'durable", () => {
-    expect(Object.keys(command.opts())).toContain("durable");
-    expect(command.durable).toEqual(false);
+    expect(command).commandToHaveOption("durable", false);
   });
 });
