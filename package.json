@@ -14,7 +14,7 @@
     "cli"
   ],
   "bin": {
-    "amqp-prosumer": "./index.js"
+    "amqp-prosumer": "./src/index.js"
   },
   "scripts": {
     "clean": "rimraf dist/ coverage/",
@@ -26,14 +26,16 @@
     "test:coverage": "jest src/ --collectCoverage --no-cache",
     "test:badges": "npm run test:coverage && jest-coverage-badges",
     "pretest:build": "npm run build",
-    "test:build": "cd dist/ && jest --setupFilesAfterEnv='./jest-setup.js'",
+    "test:build": "cd dist/ && jest --setupFilesAfterEnv='./src/jest-setup.js'",
     "lint": "eslint src/ && tsc --project tsconfig.json --noEmit",
     "lint:fix": "eslint src/ --fix",
     "format:check": "prettier src/ -c",
     "format": "prettier src/ --write",
     "update:deps": "npm outdated --parseable | awk '{ split($0, a, \":\"); print a[4]; }' | xargs npm install",
     "qa": "npm run format && npm run lint && npm run test",
-    "prepare": "husky install"
+    "postinstall": "husky install",
+    "prepublishOnly": "pinst --disable",
+    "postpublish": "pinst --enable"
   },
   "author": "Grzegorz Godlewski <ggodlewski@sorcerystudio.com>",
   "license": "MIT",
@@ -55,6 +57,7 @@
     "jest-coverage-badges": "1.0.0",
     "jest-mock-extended": "1.0.13",
     "leaked-handles": "5.2.0",
+    "pinst": "2.1.6",
     "prettier": "2.2.1",
     "rimraf": "3.0.2",
     "ts-jest": "26.5.5",
