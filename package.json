@@ -14,7 +14,7 @@
     "cli"
   ],
   "bin": {
-    "amqp-prosumer": "./src/index.js"
+    "amqp-prosumer": "./index.js"
   },
   "scripts": {
     "clean": "rimraf dist/ coverage/",
@@ -26,7 +26,7 @@
     "test:coverage": "jest src/ --collectCoverage --no-cache",
     "test:badges": "npm run test:coverage && jest-coverage-badges",
     "pretest:build": "npm run build",
-    "test:build": "cd dist/ && jest src/",
+    "test:build": "cd dist/ && jest --setupFilesAfterEnv='./jest-setup.js'",
     "lint": "eslint src/ && tsc --project tsconfig.json --noEmit",
     "lint:fix": "eslint src/ --fix",
     "format:check": "prettier src/ -c",
@@ -68,11 +68,5 @@
   },
   "engines": {
     "node": ">=10"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run format:check && npm run lint",
-      "pre-push": "npm run test:coverage"
-    }
   }
 }
