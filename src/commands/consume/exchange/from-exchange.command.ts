@@ -1,16 +1,18 @@
-import { Command, program } from "commander";
+import commander from "commander";
 import { actionConsumeExchange } from "./from-exchange.action";
 import { reportErrorAndExit } from "../../common";
 
-export interface IConsumeFromExchangeCommand extends Command {
+export interface IConsumeFromExchangeCommandOptions {
   url: string;
   assert: boolean;
   durable: boolean;
 }
 
-export function buildConsumeFromExchangeCommand(): IConsumeFromExchangeCommand {
-  return program
-    .command("from-exchange <exchangeName>")
+export function buildConsumeFromExchangeCommand(): commander.Command {
+  const program = new commander.Command("from-exchange");
+
+  program
+    .arguments("<exchangeName>")
     .alias("exchange")
     .description("Consume messages published to a exchange")
     .option(
@@ -28,7 +30,11 @@ export function buildConsumeFromExchangeCommand(): IConsumeFromExchangeCommand {
       "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
       false
     )
-    .action((exchangeName: string, options: IConsumeFromExchangeCommand) => {
-      actionConsumeExchange(exchangeName, options).catch(reportErrorAndExit);
-    }) as IConsumeFromExchangeCommand;
+    .action(
+      (exchangeName: string, options: IConsumeFromExchangeCommandOptions) => {
+        actionConsumeExchange(exchangeName, options).catch(reportErrorAndExit);
+      }
+    );
+
+  return program;
 }

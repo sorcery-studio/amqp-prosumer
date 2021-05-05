@@ -1,17 +1,11 @@
-import { Command, program } from "commander";
-import { actionProduceQueue } from "./send-to-queue.action";
+import commander from "commander";
+import { sendToQueueAction } from "./send-to-queue.action";
 
-export interface ISendToQueueCommand extends Command {
-  url: string;
-  assert: boolean;
-  durable: boolean;
-  autoDelete: boolean;
-  confirm: boolean;
-}
+export function buildSendToQueueCommand(): commander.Command {
+  const program = new commander.Command("send-to-queue");
 
-export function buildSendToQueueCommand(): ISendToQueueCommand {
-  return program
-    .command("send-to-queue <name>")
+  program
+    .arguments("<name>")
     .alias("queue")
     .description("Sends messages to a defined queue")
     .option(
@@ -35,5 +29,7 @@ export function buildSendToQueueCommand(): ISendToQueueCommand {
       "Use publisher confirms to wait for the broker to confirm if the message was handled",
       false
     )
-    .action(actionProduceQueue) as ISendToQueueCommand;
+    .action(sendToQueueAction);
+
+  return program;
 }

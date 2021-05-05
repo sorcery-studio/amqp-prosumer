@@ -19,7 +19,7 @@ import {
 } from "../../common";
 import { writeMessageToFile } from "../output-writer";
 import { Options } from "amqplib";
-import { IConsumeFromExchangeCommand } from "./from-exchange.command";
+import { IConsumeFromExchangeCommandOptions } from "./from-exchange.command";
 
 const log = debug("amqp-prosumer:consumer");
 
@@ -32,7 +32,7 @@ function buildDefaultQueueOptions(): Options.AssertQueue {
 }
 
 function buildExchangeOptionsFrom(
-  command: IConsumeFromExchangeCommand
+  command: IConsumeFromExchangeCommandOptions
 ): Options.AssertExchange {
   return {
     durable: command.durable,
@@ -42,7 +42,7 @@ function buildExchangeOptionsFrom(
 
 export async function actionConsumeExchange(
   exchangeName: string,
-  command: IConsumeFromExchangeCommand,
+  command: IConsumeFromExchangeCommandOptions,
   onMessage: ConsumeCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {

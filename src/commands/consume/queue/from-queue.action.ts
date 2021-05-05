@@ -17,17 +17,24 @@ import {
 } from "../../common";
 import { writeMessageToFile } from "../output-writer";
 import { Options } from "amqplib";
-import { IConsumeFromQueueCommand } from "./from-queue.command";
 
 const log = debug("amqp-prosumer:consumer");
 
+export interface IConsumeFromQueueCommandOptions {
+  url: string;
+  assert: boolean;
+  durable: boolean;
+  autoDelete: boolean;
+  exclusive: boolean;
+}
+
 function buildQueueOptionsFrom(
-  command: IConsumeFromQueueCommand
+  options: IConsumeFromQueueCommandOptions
 ): Options.AssertQueue {
   return {
-    durable: command.durable,
-    autoDelete: command.autoDelete,
-    exclusive: command.exclusive,
+    durable: options.durable,
+    autoDelete: options.autoDelete,
+    exclusive: options.exclusive,
   };
 }
 
@@ -35,7 +42,7 @@ function buildQueueOptionsFrom(
  * Starts the consumer action and returns the shutdown function
  *
  * @param queueName The queue which should be consumed by the action
- * @param command Command options
+ * @param options Command options
  * @param onMessage Function which will be called for each consumed message
  * @param regShutdown Function which will be used to register the returned shutdown function
  *
@@ -43,7 +50,7 @@ function buildQueueOptionsFrom(
  */
 export async function actionConsumeQueue(
   queueName: string,
-  command: IConsumeFromQueueCommand,
+  options: IConsumeFromQueueCommandOptions,
   onMessage: ConsumeCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
@@ -63,10 +70,10 @@ export async function actionConsumeQueue(
       resolve(handler);
     };
 
-    connectToBroker(command.url)
+    connectToBroker(options.url)
       .then(createChannel)
       .then(
-        declareQueue(queueName, buildQueueOptionsFrom(command), command.assert)
+        declareQueue(queueName, buildQueueOptionsFrom(options), options.assert)
       )
       .then(consume(onMessage)) // Note: OnMessage could actually be done on rxjs, but that's not the goal of the project
       .then(registerConsumerShutdown)

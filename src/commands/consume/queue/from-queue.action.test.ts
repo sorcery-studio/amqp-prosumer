@@ -1,5 +1,7 @@
-import { actionConsumeQueue } from "./from-queue.action";
-import { IConsumeFromQueueCommand } from "./from-queue.command";
+import {
+  actionConsumeQueue,
+  IConsumeFromQueueCommandOptions,
+} from "./from-queue.action";
 import * as amqplib from "amqplib";
 import { Channel, Connection } from "amqplib";
 import { mock } from "jest-mock-extended";
@@ -15,7 +17,7 @@ describe("Consume From Queue Action Unit Tests", () => {
         durable: false,
         exclusive: false,
         url: "amqp://some-host",
-      } as IConsumeFromQueueCommand;
+      } as IConsumeFromQueueCommandOptions;
 
       // The connection to the broker
       const mockConnection = mock<Connection>();
@@ -50,7 +52,7 @@ describe("Consume From Queue Action Unit Tests", () => {
         durable: false,
         exclusive: false,
         url: "amqp://some-host",
-      } as IConsumeFromQueueCommand;
+      } as IConsumeFromQueueCommandOptions;
 
       // The connection to the broker
       const mockConnection = mock<Connection>();
@@ -93,7 +95,7 @@ describe("Consume From Queue Action Unit Tests", () => {
         durable: false,
         exclusive: false,
         url: "amqp://some-host",
-      } as IConsumeFromQueueCommand;
+      } as IConsumeFromQueueCommandOptions;
 
       // The connection to the broker
       const mockConnection = mock<Connection>();
@@ -130,7 +132,7 @@ describe("Consume From Queue Action Unit Tests", () => {
           durable: false,
           exclusive: false,
           url: "amqp://some-host",
-        } as IConsumeFromQueueCommand;
+        } as IConsumeFromQueueCommandOptions;
 
         const spyConnect = jest.spyOn(amqplib, "connect");
         const error = new Error("Error during connection");
@@ -156,7 +158,7 @@ describe("Consume From Queue Action Unit Tests", () => {
           durable: false,
           exclusive: false,
           url: "amqp://some-host",
-        } as IConsumeFromQueueCommand;
+        } as IConsumeFromQueueCommandOptions;
 
         const mockConnection = mock<Connection>();
         jest.spyOn(amqplib, "connect").mockResolvedValueOnce(mockConnection);
@@ -184,7 +186,7 @@ describe("Consume From Queue Action Unit Tests", () => {
           durable: false,
           exclusive: false,
           url: "amqp://some-host",
-        } as IConsumeFromQueueCommand;
+        } as IConsumeFromQueueCommandOptions;
 
         const mockConnection = mock<Connection>();
         const mockChannel = mock<Channel>();
@@ -213,7 +215,7 @@ describe("Consume From Queue Action Unit Tests", () => {
           durable: false,
           exclusive: false,
           url: "amqp://some-host",
-        } as IConsumeFromQueueCommand;
+        } as IConsumeFromQueueCommandOptions;
 
         const mockConnection = mock<Connection>();
         const mockChannel = mock<Channel>();
@@ -249,7 +251,7 @@ describe("Consume From Queue Action Unit Tests", () => {
           durable: false,
           exclusive: false,
           url: "amqp://some-host",
-        } as IConsumeFromQueueCommand;
+        } as IConsumeFromQueueCommandOptions;
 
         const mockConnection = mock<Connection>();
         const mockChannel = mock<Channel>();
@@ -285,7 +287,7 @@ describe("Consume From Queue Action Unit Tests", () => {
           durable: false,
           exclusive: false,
           url: "amqp://some-host",
-        } as IConsumeFromQueueCommand;
+        } as IConsumeFromQueueCommandOptions;
 
         const mockConnection = mock<Connection>();
         const mockChannel = mock<Channel>();

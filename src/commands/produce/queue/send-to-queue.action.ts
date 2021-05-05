@@ -13,22 +13,29 @@ import {
 } from "../../../utils/amqp-adapter";
 import { readInputFile } from "../../../utils/io";
 import { Options } from "amqplib";
-import { ISendToQueueCommand } from "./send-to-queue.command";
+
+export interface ISendToQueueCommandOptions {
+  url: string;
+  assert: boolean;
+  durable: boolean;
+  autoDelete: boolean;
+  confirm: boolean;
+}
 
 const logger = debug("amqp-prosumer:producer");
 
 function buildQueueOptionsFrom(
-  command: ISendToQueueCommand
+  options: ISendToQueueCommandOptions
 ): Options.AssertQueue {
   return {
-    durable: command.durable,
-    autoDelete: command.autoDelete,
+    durable: options.durable,
+    autoDelete: options.autoDelete,
   };
 }
 
-export function actionProduceQueue(
+export function sendToQueueAction(
   queueName: string,
-  command: ISendToQueueCommand,
+  options: ISendToQueueCommandOptions,
   readInput = readInputFile,
   log: Debugger = logger
 ): void {
@@ -36,8 +43,8 @@ export function actionProduceQueue(
 
   const setupQueue = declareQueue(
     queueName,
-    buildQueueOptionsFrom(command),
-    command.assert
+    buildQueueOptionsFrom(options),
+    options.assert
   );
 
   const sendMessages = (sendOutput: MessageProduceFn) => async (
@@ -54,10 +61,10 @@ export function actionProduceQueue(
     return context;
   };
 
-  connectToBroker(command.url)
-    .then(command.confirm ? createConfirmChannel : createChannel)
+  connectToBroker(options.url)
+    .then(options.confirm ? createConfirmChannel : createChannel)
     .then(setupQueue)
-    .then(sendMessages(command.confirm ? sendToQueueConfirmed : sendToQueue))
+    .then(sendMessages(options.confirm ? sendToQueueConfirmed : sendToQueue))
     .then(closeChannel)
     .then(disconnectFromBroker)
     .then(() => log("Produce action executed successfully"))

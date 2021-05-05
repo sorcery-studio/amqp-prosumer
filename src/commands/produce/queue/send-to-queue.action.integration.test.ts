@@ -1,13 +1,13 @@
-import { actionProduceQueue } from "./send-to-queue.action";
+import { sendToQueueAction } from "./send-to-queue.action";
 import { InputReaderGen } from "../../../utils/io";
 import { connectTestAsConsumer } from "../../../utils/connected-test";
-import { ISendToQueueCommand } from "./send-to-queue.command";
+import { ISendToQueueCommandOptions } from "./send-to-queue.action";
 
 jest.unmock("amqplib");
 
 describe("Produce To Queue Action Tests", () => {
   async function runAndAssert(
-    cmd: ISendToQueueCommand,
+    cmd: ISendToQueueCommandOptions,
     done: jest.DoneCallback
   ): Promise<void> {
     const {
@@ -23,7 +23,7 @@ describe("Produce To Queue Action Tests", () => {
     };
 
     await runAndListenForMessage(
-      () => actionProduceQueue("test-queue-producer", cmd, readInput),
+      () => sendToQueueAction("test-queue-producer", cmd, readInput),
       async (text) => {
         expect(text).toEqual("test-message");
         await disconnectTestFromBroker();
@@ -34,22 +34,24 @@ describe("Produce To Queue Action Tests", () => {
 
   test("it sends a message to the appointed queue", async (done) => {
     const cmd = {
+      url: "amqp://localhost",
       durable: false,
       autoDelete: true,
       assert: true,
       confirm: false,
-    } as ISendToQueueCommand;
+    };
 
     await runAndAssert(cmd, done);
   });
 
   test("it sends a message to the appointed queue with confirm mode", async (done) => {
     const cmd = {
+      url: "amqp://localhost",
       durable: false,
       autoDelete: true,
       assert: true,
       confirm: true,
-    } as ISendToQueueCommand;
+    };
 
     await runAndAssert(cmd, done);
   });

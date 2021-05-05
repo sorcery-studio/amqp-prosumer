@@ -1,7 +1,9 @@
-import { actionProduceExchange } from "./publish-to-exchange.action";
+import {
+  actionProduceExchange,
+  IPublishToExchangeCommandOptions,
+} from "./publish-to-exchange.action";
 import { InputReaderGen } from "../../../utils/io";
 import { connectTestAsConsumer } from "../../../utils/connected-test";
-import { IPublishToExchangeCommand } from "./publish-to-exchange.command";
 import { IConnectionContext, publish } from "../../../utils/amqp-adapter";
 import { Options } from "amqplib";
 import Publish = Options.Publish;
@@ -13,9 +15,12 @@ const readTestInput: InputReaderGen = function* () {
 };
 
 function createCommand(
-  opts: Partial<IPublishToExchangeCommand>
-): IPublishToExchangeCommand {
-  const baseCommand = {
+  opts: Partial<IPublishToExchangeCommandOptions>
+): IPublishToExchangeCommandOptions {
+  const baseCommand: IPublishToExchangeCommandOptions = {
+    url: "amqp://localhost",
+    exchangeType: "topic",
+    routingKey: "",
     durable: false,
     autoDelete: true,
     assert: true,
@@ -25,7 +30,7 @@ function createCommand(
   return {
     ...baseCommand,
     ...opts,
-  } as IPublishToExchangeCommand;
+  };
 }
 
 describe("Produce To Exchange Action", () => {

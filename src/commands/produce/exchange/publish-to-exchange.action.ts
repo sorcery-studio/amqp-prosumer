@@ -11,23 +11,35 @@ import {
   publish,
 } from "../../../utils/amqp-adapter";
 import { Options } from "amqplib";
-import { IPublishToExchangeCommand } from "./publish-to-exchange.command";
 
 const logger = debug("amqp-prosumer:producer");
 
+export interface IPublishToExchangeCommandOptions {
+  url: string;
+  assert: boolean;
+  durable: boolean;
+  exchangeType: "direct" | "topic" | "headers" | "fanout";
+  routingKey: string;
+  autoDelete: boolean;
+  headers?: string[];
+  confirm: boolean;
+}
+
 function buildExchangeOptionsFrom(
-  command: IPublishToExchangeCommand
+  options: IPublishToExchangeCommandOptions
 ): Options.AssertExchange {
   return {
-    durable: command.durable,
-    autoDelete: command.autoDelete,
+    durable: options.durable,
+    autoDelete: options.autoDelete,
   };
 }
 
 type PublishHeaders = { [key: string]: string };
 
-function parseHeaders(command: IPublishToExchangeCommand): PublishHeaders {
-  const parsedHeaders = command.headers?.reduce(
+function parseHeaders(
+  options: IPublishToExchangeCommandOptions
+): PublishHeaders {
+  const parsedHeaders = options.headers?.reduce(
     (prev: PublishHeaders, cur: string) => {
       const [name, value] = cur.split("=");
 
@@ -47,7 +59,7 @@ function parseHeaders(command: IPublishToExchangeCommand): PublishHeaders {
 }
 
 function buildPublishOptionsFrom(
-  command: IPublishToExchangeCommand
+  command: IPublishToExchangeCommandOptions
 ): Options.Publish {
   return {
     headers: parseHeaders(command),
@@ -56,21 +68,21 @@ function buildPublishOptionsFrom(
 
 export function actionProduceExchange(
   exchangeName: string,
-  command: IPublishToExchangeCommand,
+  options: IPublishToExchangeCommandOptions,
   readInput = readInputFile,
   sendOutput = publish,
   log: Debugger = logger
 ): void {
   log("Staring the producer action");
 
-  const exchangeOptions = buildExchangeOptionsFrom(command);
-  const publishOptions = buildPublishOptionsFrom(command);
+  const exchangeOptions = buildExchangeOptionsFrom(options);
+  const publishOptions = buildPublishOptionsFrom(options);
 
   const sendMessages = async (
     context: IConnectionContext
   ): Promise<IConnectionContext> => {
     for (const message of readInput()) {
-      await sendOutput(context, message, command.routingKey, publishOptions);
+      await sendOutput(context, message, options.routingKey, publishOptions);
     }
 
     return context;
@@ -78,13 +90,13 @@ export function actionProduceExchange(
 
   const setupExchange = declareExchange(
     exchangeName,
-    command.exchangeType,
+    options.exchangeType,
     exchangeOptions,
-    command.assert
+    options.assert
   );
 
-  connectToBroker(command.url)
-    .then(command.confirm ? createConfirmChannel : createChannel)
+  connectToBroker(options.url)
+    .then(options.confirm ? createConfirmChannel : createChannel)
     .then(setupExchange)
     .then(sendMessages)
     .then(closeChannel)

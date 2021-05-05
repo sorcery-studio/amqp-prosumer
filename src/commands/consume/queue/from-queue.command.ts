@@ -1,18 +1,15 @@
-import { Command, program } from "commander";
-import { actionConsumeQueue } from "./from-queue.action";
+import commander from "commander";
+import {
+  actionConsumeQueue,
+  IConsumeFromQueueCommandOptions,
+} from "./from-queue.action";
 import { reportErrorAndExit } from "../../common";
 
-export interface IConsumeFromQueueCommand extends Command {
-  url: string;
-  assert: boolean;
-  durable: boolean;
-  autoDelete: boolean;
-  exclusive: boolean;
-}
+export function buildConsumeFromQueueCommand(): commander.Command {
+  const program = new commander.Command("from-queue");
 
-export function buildConsumeFromQueueCommand(): IConsumeFromQueueCommand {
-  return program
-    .command("from-queue <queueName>")
+  program
+    .arguments("<queueName>")
     .alias("queue")
     .description("Consume messages from a defined queue")
     .option(
@@ -40,7 +37,9 @@ export function buildConsumeFromQueueCommand(): IConsumeFromQueueCommand {
       "Mark the resulting queue for automatic delete when if there will be no consumers",
       true
     )
-    .action((queueName: string, options: IConsumeFromQueueCommand) => {
+    .action((queueName: string, options: IConsumeFromQueueCommandOptions) => {
       actionConsumeQueue(queueName, options).catch(reportErrorAndExit);
-    }) as IConsumeFromQueueCommand;
+    });
+
+  return program;
 }

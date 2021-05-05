@@ -1,21 +1,15 @@
-import { Command, program } from "commander";
+import commander from "commander";
 import { reportErrorAndExit } from "../../common";
-import { actionProduceExchange } from "./publish-to-exchange.action";
+import {
+  actionProduceExchange,
+  IPublishToExchangeCommandOptions,
+} from "./publish-to-exchange.action";
 
-export interface IPublishToExchangeCommand extends Command {
-  url: string;
-  assert: boolean;
-  durable: boolean;
-  exchangeType: "direct" | "topic" | "headers" | "fanout";
-  routingKey: string;
-  autoDelete: boolean;
-  headers?: string[];
-  confirm: boolean;
-}
+export function buildPublishToExchangeCommand(): commander.Command {
+  const program = new commander.Command("publish-to-exchange");
 
-export function buildPublishToExchangeCommand(): IPublishToExchangeCommand {
-  return program
-    .command("publish-to-exchange <name>")
+  program
+    .arguments("<name>")
     .alias("exchange")
     .description("Publishes messages to the defined exchange")
     .option(
@@ -49,11 +43,15 @@ export function buildPublishToExchangeCommand(): IPublishToExchangeCommand {
       "Use publisher confirms to wait for the broker to confirm if the message was handled",
       false
     )
-    .action((exchangeName: string, options: IPublishToExchangeCommand) => {
-      try {
-        actionProduceExchange(exchangeName, options);
-      } catch (err) {
-        reportErrorAndExit(err);
+    .action(
+      (exchangeName: string, options: IPublishToExchangeCommandOptions) => {
+        try {
+          actionProduceExchange(exchangeName, options);
+        } catch (err) {
+          reportErrorAndExit(err);
+        }
       }
-    }) as IPublishToExchangeCommand;
+    );
+
+  return program;
 }
