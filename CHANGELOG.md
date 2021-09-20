@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2021-09-20
+
+### Security
+
+* Updated dependencies to fix known security issues of some packages
+
 ## [1.0.1] - 2021-09-20
 
 ### Security
