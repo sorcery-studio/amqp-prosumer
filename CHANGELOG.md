@@ -1,14 +1,10 @@
 # Changelog
 
-## [Unreleased] - YYYY-MM-DD
+## [1.0.1] - 2021-09-20
 
-### Added
+### Security
 
-* The produce to queue command now supports the following options:
-    * `exchangeType` which allows setting the type of the exchange
-    * `routingKey` which allows setting the routing key for published messages
-    * `headers`(variadic) which allows setting the headers for published messages
-* Publishing to exchange and queue supports `confirm` parameter - if provided, all the messages will be requiring confirmation from the broker.
+* Updated dependencies to fix known security issues of some packages
 
 ## [1.0.0] - 2020-10-25
 
