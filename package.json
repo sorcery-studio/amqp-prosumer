@@ -51,7 +51,6 @@
     "eslint-plugin-jest": "24.4.2",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-prettier": "4.0.0",
-    "fast-check": "2.14.0",
     "husky": "^6.0.0",
     "jest": "26.6.3",
     "jest-coverage-badges": "1.0.0",
