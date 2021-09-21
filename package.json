@@ -58,7 +58,7 @@
     "jest-mock-extended": "1.0.13",
     "leaked-handles": "5.2.0",
     "pinst": "2.1.6",
-    "prettier": "2.2.1",
+    "prettier": "2.4.1",
     "rimraf": "3.0.2",
     "ts-jest": "26.5.5",
     "ts-node": "9.1.1",

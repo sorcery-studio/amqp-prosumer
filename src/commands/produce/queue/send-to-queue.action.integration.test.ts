@@ -10,12 +10,10 @@ describe("Produce To Queue Action Tests", () => {
     cmd: ISendToQueueCommandOptions,
     done: jest.DoneCallback
   ): Promise<void> {
-    const {
-      runAndListenForMessage,
-      disconnectTestFromBroker,
-    } = await connectTestAsConsumer({
-      queueName: "test-queue-producer",
-    });
+    const { runAndListenForMessage, disconnectTestFromBroker } =
+      await connectTestAsConsumer({
+        queueName: "test-queue-producer",
+      });
 
     // eslint-disable-next-line require-yield
     const readInput: InputReaderGen = function* () {

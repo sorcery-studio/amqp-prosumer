@@ -18,14 +18,12 @@ describe("Consume From Exchange Action Integration Tests", () => {
       url: "amqp://localhost",
     };
 
-    const {
-      disconnectTestFromBroker,
-      publishTestMessage,
-    } = await connectTestAsExchangeProducer({
-      exchangeName: "test-exchange",
-      routingKey: "",
-      exchangeType: "topic",
-    });
+    const { disconnectTestFromBroker, publishTestMessage } =
+      await connectTestAsExchangeProducer({
+        exchangeName: "test-exchange",
+        routingKey: "",
+        exchangeType: "topic",
+      });
 
     const onMessage: ConsumeCallback = (msg) => {
       expect(msg.content.toString()).toEqual("test-message");

@@ -14,9 +14,9 @@ describe("Common", () => {
       const NUM_ASSERTIONS = 2;
       expect.assertions(NUM_ASSERTIONS);
 
-      const exitReceiver = ({
+      const exitReceiver = {
         exit: jest.fn(),
-      } as unknown) as ExitReceiver;
+      } as unknown as ExitReceiver;
 
       const consoleSpy = jest.spyOn(console, "error");
       consoleSpy.mockImplementation();

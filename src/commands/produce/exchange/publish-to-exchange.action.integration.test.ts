@@ -45,17 +45,15 @@ describe("Produce To Exchange Action", () => {
 
     const exchangeName = "test-exchange-producer-topic";
 
-    const {
-      runAndListenForMessage,
-      disconnectTestFromBroker,
-    } = await connectTestAsConsumer(
-      { queueName: "" },
-      {
-        exchangeName,
-        exchangeType,
-        routingKey: "some-topic",
-      }
-    );
+    const { runAndListenForMessage, disconnectTestFromBroker } =
+      await connectTestAsConsumer(
+        { queueName: "" },
+        {
+          exchangeName,
+          exchangeType,
+          routingKey: "some-topic",
+        }
+      );
 
     await runAndListenForMessage(
       () => actionProduceExchange(exchangeName, cmd, readTestInput),
@@ -79,17 +77,15 @@ describe("Produce To Exchange Action", () => {
 
     const exchangeName = "test-exchange-producer-direct";
 
-    const {
-      runAndListenForMessage,
-      disconnectTestFromBroker,
-    } = await connectTestAsConsumer(
-      { queueName: "" },
-      {
-        exchangeName,
-        exchangeType,
-        routingKey,
-      }
-    );
+    const { runAndListenForMessage, disconnectTestFromBroker } =
+      await connectTestAsConsumer(
+        { queueName: "" },
+        {
+          exchangeName,
+          exchangeType,
+          routingKey,
+        }
+      );
 
     await runAndListenForMessage(
       () => actionProduceExchange(exchangeName, cmd, readTestInput),
@@ -113,17 +109,15 @@ describe("Produce To Exchange Action", () => {
 
     const exchangeName = "test-exchange-producer-fanout";
 
-    const {
-      runAndListenForMessage,
-      disconnectTestFromBroker,
-    } = await connectTestAsConsumer(
-      { queueName: "" },
-      {
-        exchangeName,
-        exchangeType,
-        routingKey,
-      }
-    );
+    const { runAndListenForMessage, disconnectTestFromBroker } =
+      await connectTestAsConsumer(
+        { queueName: "" },
+        {
+          exchangeName,
+          exchangeType,
+          routingKey,
+        }
+      );
 
     await runAndListenForMessage(
       () => actionProduceExchange(exchangeName, cmd, readTestInput),
@@ -147,21 +141,19 @@ describe("Produce To Exchange Action", () => {
 
     const exchangeName = "test-exchange-producer-headers";
 
-    const {
-      runAndListenForMessage,
-      disconnectTestFromBroker,
-    } = await connectTestAsConsumer(
-      { queueName: "" },
-      {
-        exchangeName,
-        exchangeType,
-        routingKey,
-        bindArgs: {
-          headerA: "A",
-          headerB: "B",
-        },
-      }
-    );
+    const { runAndListenForMessage, disconnectTestFromBroker } =
+      await connectTestAsConsumer(
+        { queueName: "" },
+        {
+          exchangeName,
+          exchangeType,
+          routingKey,
+          bindArgs: {
+            headerA: "A",
+            headerB: "B",
+          },
+        }
+      );
 
     await runAndListenForMessage(
       () => actionProduceExchange(exchangeName, cmd, readTestInput),
@@ -186,17 +178,15 @@ describe("Produce To Exchange Action", () => {
 
     const exchangeName = "test-exchange-producer-direct-confirm";
 
-    const {
-      runAndListenForMessage,
-      disconnectTestFromBroker,
-    } = await connectTestAsConsumer(
-      { queueName: "" },
-      {
-        exchangeName,
-        exchangeType,
-        routingKey,
-      }
-    );
+    const { runAndListenForMessage, disconnectTestFromBroker } =
+      await connectTestAsConsumer(
+        { queueName: "" },
+        {
+          exchangeName,
+          exchangeType,
+          routingKey,
+        }
+      );
 
     await runAndListenForMessage(
       () =>

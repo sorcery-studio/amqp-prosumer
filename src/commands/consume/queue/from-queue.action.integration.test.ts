@@ -17,12 +17,10 @@ describe("Consume From Queue Action Integration Tests", () => {
       url: "amqp://localhost",
     };
 
-    const {
-      disconnectTestFromBroker,
-      sendTestMessage,
-    } = await createTestAsQueueProducer({
-      queueName: "test-queue",
-    });
+    const { disconnectTestFromBroker, sendTestMessage } =
+      await createTestAsQueueProducer({
+        queueName: "test-queue",
+      });
 
     const onMessage: ConsumeCallback = (msg) => {
       expect(msg.content.toString()).toEqual("test-message");

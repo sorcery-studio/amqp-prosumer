@@ -47,19 +47,19 @@ export function sendToQueueAction(
     options.assert
   );
 
-  const sendMessages = (sendOutput: MessageProduceFn) => async (
-    context: IConnectionContext
-  ): Promise<IConnectionContext> => {
-    if (typeof context.queueName !== "string") {
-      throw new Error("Can't send to queue if the the name is not defined");
-    }
+  const sendMessages =
+    (sendOutput: MessageProduceFn) =>
+    async (context: IConnectionContext): Promise<IConnectionContext> => {
+      if (typeof context.queueName !== "string") {
+        throw new Error("Can't send to queue if the the name is not defined");
+      }
 
-    for (const message of readInput()) {
-      await sendOutput(context, message);
-    }
+      for (const message of readInput()) {
+        await sendOutput(context, message);
+      }
 
-    return context;
-  };
+      return context;
+    };
 
   connectToBroker(options.url)
     .then(options.confirm ? createConfirmChannel : createChannel)
