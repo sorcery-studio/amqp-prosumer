@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2022-03-27
+
+### Security
+
+* Updated dependencies to fix known security issues of some packages
+
 ## [1.0.3] - 2022-03-18
 
 ### Security
