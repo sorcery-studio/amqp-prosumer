@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.0] - 2022-04-07
+
+## Removed
+
+* NodeJS `v10` is no loner supported by the tool, as some dependencies are no longer supporting it
+
 ## [1.0.5] - 2022-04-06
 
 ### Updates
