@@ -3,8 +3,8 @@ import {
   cancelConsumer,
   closeChannel,
   connectToBroker,
-  consume,
-  OnMessageCallback,
+  startConsumer,
+  OnMessageClbk,
   createChannel,
   declareQueue,
   disconnectFromBroker,
@@ -51,7 +51,7 @@ function buildQueueOptionsFrom(
 export async function actionConsumeQueue(
   queueName: string,
   options: IConsumeFromQueueCommandOptions,
-  onMessage: OnMessageCallback = writeMessageToFile,
+  onMessage: OnMessageClbk = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {
@@ -75,7 +75,7 @@ export async function actionConsumeQueue(
       .then(
         declareQueue(queueName, buildQueueOptionsFrom(options), options.assert)
       )
-      .then(consume(onMessage)) // Note: OnMessage could actually be done on rxjs, but that's not the goal of the project
+      .then(startConsumer(onMessage)) // Note: OnMessage could actually be done on rxjs, but that's not the goal of the project
       .then(registerConsumerShutdown)
       .catch((err) => {
         console.error("The consume action encountered an error", err);

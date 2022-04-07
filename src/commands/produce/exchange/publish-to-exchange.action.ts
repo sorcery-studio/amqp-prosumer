@@ -7,7 +7,7 @@ import {
   createConfirmChannel,
   declareExchange,
   disconnectFromBroker,
-  IConnectionContext,
+  IChannelCtx,
   publish,
 } from "../../../utils/amqp-adapter";
 import { Options } from "amqplib";
@@ -78,9 +78,7 @@ export function actionProduceExchange(
   const exchangeOptions = buildExchangeOptionsFrom(options);
   const publishOptions = buildPublishOptionsFrom(options);
 
-  const sendMessages = async (
-    context: IConnectionContext
-  ): Promise<IConnectionContext> => {
+  const sendMessages = async (context: IChannelCtx): Promise<IChannelCtx> => {
     for (const message of readInput()) {
       await sendOutput(context, message, options.routingKey, publishOptions);
     }

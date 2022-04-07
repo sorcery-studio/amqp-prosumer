@@ -15,33 +15,27 @@ import { ExchangeType } from "../types";
 
 const log = debug("amqp-prosumer:amqp-adapter");
 
-export enum ConsumeResult {
-  ACK,
-  RETRY,
-  REJECT,
-}
-
-export interface IConnectionContext {
-  readonly channel: Channel | ConfirmChannel;
+export interface IChannelCtx {
   readonly connection: Connection;
+  readonly channel: Channel | ConfirmChannel;
   readonly queueName?: string;
   readonly exchangeName?: string;
 }
 
-export interface IConsumerContext extends IConnectionContext {
+export interface IConsumerContext extends IChannelCtx {
   readonly consumerTag: string;
 }
 
-export type AmqpLibConsumeFn = (msg: amqplib.ConsumeMessage | null) => void;
+export type AmqpLibConsume = (msg: amqplib.ConsumeMessage | null) => void;
 
 /**
  * Represents a callback function which will be called with the message which got consumed
  *
  * It's expected to return one of the
  *
- * @return {Promise<ConsumeResult>} Consume result which will determine the faith of the message passed to the consumer
+ * @return {Promise<void>} Consume result which will determine the faith of the message passed to the consumer
  */
-export type OnMessageCallback = (msg: ConsumeMessage) => Promise<ConsumeResult>;
+export type OnMessageClbk = (msg: ConsumeMessage) => Promise<void>;
 
 type AnyFunction = (...args: any[]) => any;
 
@@ -86,12 +80,11 @@ export function createDefaultChannelEventListeners(
   };
 }
 
-export async function connectToBroker(
-  url: string
-): Promise<amqplib.Connection> {
+export async function connectToBroker(url: string): Promise<Connection> {
   log("Connecting to broker %s", url);
   const connection = await amqplib.connect(url);
   log("Connection to broker %s established", url);
+
   return connection;
 }
 
@@ -119,7 +112,7 @@ function attachListeners(
 export async function createChannel(
   connection: amqplib.Connection,
   eventListeners: Record<string, AnyFunction> = {}
-): Promise<IConnectionContext> {
+): Promise<IChannelCtx> {
   log("Creating new channel");
   const channel = await connection.createChannel();
   log("Channel created");
@@ -135,7 +128,7 @@ export async function createChannel(
 export async function createConfirmChannel(
   connection: amqplib.Connection,
   eventListeners: Record<string, AnyFunction> = {}
-): Promise<IConnectionContext> {
+): Promise<IChannelCtx> {
   log("Creating new channel");
   const channel = await connection.createConfirmChannel();
   log("Channel created");
@@ -153,9 +146,7 @@ export async function createConfirmChannel(
  *
  * @param context
  */
-export async function closeChannel(
-  context: IConnectionContext
-): Promise<Connection> {
+export async function closeChannel(context: IChannelCtx): Promise<Connection> {
   log("Closing channel");
   await context.channel.close();
 
@@ -175,8 +166,8 @@ export function declareQueue(
   queueName: string,
   queueOptions: Options.AssertQueue,
   assert: boolean
-): (context: IConnectionContext) => Promise<IConnectionContext> {
-  return async (context: IConnectionContext): Promise<IConnectionContext> => {
+): (ctx: IChannelCtx) => Promise<IChannelCtx> {
+  return async (context: IChannelCtx): Promise<IChannelCtx> => {
     log("Declaring queue %s", queueName);
     return {
       ...context,
@@ -192,8 +183,8 @@ export function declareExchange(
   type: ExchangeType,
   options: Options.AssertExchange,
   assert: boolean
-): (context: IConnectionContext) => Promise<IConnectionContext> {
-  return async (context): Promise<IConnectionContext> => {
+): (context: IChannelCtx) => Promise<IChannelCtx> {
+  return async (context): Promise<IChannelCtx> => {
     log("Declaring exchange %s", exchangeName);
     return {
       ...context,
@@ -207,8 +198,8 @@ export function declareExchange(
 
 export function bindQueueAndExchange(
   binding = "#"
-): (ctx: IConnectionContext) => Promise<IConnectionContext> {
-  return async (context: IConnectionContext): Promise<IConnectionContext> => {
+): (ctx: IChannelCtx) => Promise<IChannelCtx> {
+  return async (context: IChannelCtx): Promise<IChannelCtx> => {
     if (
       typeof context.queueName !== "string" ||
       typeof context.exchangeName !== "string"
@@ -243,19 +234,28 @@ export function isOfErrorType(err: any): err is Error {
   );
 }
 
-export type OnMessageErrorCallback = (err: unknown | Error) => void;
+export type OnErrorClbk = (err: unknown | Error) => void;
 
-export type OnCancelCallback = () => void;
+export type OnCancelClbk = () => void;
 
-export type OnDoneCallback = () => void;
+export type OnDoneClbk = () => void;
 
-export function createConsumerFn(
+/**
+ * This function is supposed to prepare a consumer function for AMQP lib
+ *
+ * @param channel The channel which will be consumed
+ * @param onMessage The operation to run on the message passed from the broker
+ * @param onDone The operation to perform once the message is _finally_ processed
+ * @param onMessageError The operation to perform when the onMessage callback will end up with an error
+ * @param onCancel The operation to perform when the broker will send a consumer cancel notification
+ */
+export function createConsumer(
   channel: Channel,
-  onMessage: OnMessageCallback,
-  onDone: OnDoneCallback,
-  onMessageError: OnMessageErrorCallback,
-  onCancel: OnCancelCallback
-): AmqpLibConsumeFn {
+  onMessage: OnMessageClbk,
+  onDone: OnDoneClbk,
+  onMessageError: OnErrorClbk,
+  onCancel: OnCancelClbk
+): AmqpLibConsume {
   return (msg): void => {
     // Wrapping to have the async/await syntax, but still return a valid MessageConsumer function
     // It might make more sense to rewrite this to .then .catch .finally
@@ -297,6 +297,9 @@ export function createConsumerFn(
   };
 }
 
+/**
+ * Empty function created for the purpose of providing a default implementation
+ */
 const noop = (): void => {
   return;
 };
@@ -306,15 +309,15 @@ const noop = (): void => {
  * @param onError The callback which will be executed when the onMessage function ends up with an error
  * @param onCancel The callback which will be executed once the broker sends a "cancel consumer" message
  * @param onDone The callback which will be executed once the message is ACK'ed on the broker
- * @param callbackWrapper The wrapper function which implements the logic around the handleMessage function (infrastructure logic)
+ * @param consumerFactory The wrapper function which implements the logic around the handleMessage function (infrastructure logic)
  */
-export function consume(
-  onMessage: OnMessageCallback,
-  onError: OnMessageErrorCallback = noop,
-  onCancel: OnCancelCallback = noop,
-  onDone: OnDoneCallback = noop,
-  callbackWrapper = createConsumerFn
-): (context: IConnectionContext) => Promise<IConsumerContext> {
+export function startConsumer(
+  onMessage: OnMessageClbk,
+  onError: OnErrorClbk = noop,
+  onCancel: OnCancelClbk = noop,
+  onDone: OnDoneClbk = noop,
+  consumerFactory = createConsumer
+): (context: IChannelCtx) => Promise<IConsumerContext> {
   return async (context): Promise<IConsumerContext> => {
     if (typeof context.queueName !== "string") {
       throw new Error("Missing queue name");
@@ -327,7 +330,7 @@ export function consume(
       consumerTag: (
         await context.channel.consume(
           context.queueName,
-          callbackWrapper(context.channel, onMessage, onDone, onError, onCancel)
+          consumerFactory(context.channel, onMessage, onDone, onError, onCancel)
         )
       ).consumerTag,
     };
@@ -345,14 +348,14 @@ export async function cancelConsumer(
 }
 
 export type MessageProduceFn = (
-  context: IConnectionContext,
+  context: IChannelCtx,
   message: string
-) => Promise<IConnectionContext>;
+) => Promise<IChannelCtx>;
 
 export const sendToQueue: MessageProduceFn = async (
-  context: IConnectionContext,
+  context: IChannelCtx,
   message: string
-): Promise<IConnectionContext> => {
+): Promise<IChannelCtx> => {
   log("Sending message to queue: %s", message);
 
   const { channel, queueName } = context;
@@ -371,9 +374,9 @@ export const sendToQueue: MessageProduceFn = async (
 };
 
 export const sendToQueueConfirmed: MessageProduceFn = (
-  context: IConnectionContext,
+  context: IChannelCtx,
   message: string
-): Promise<IConnectionContext> => {
+): Promise<IChannelCtx> => {
   return new Promise((resolve, reject) => {
     log("Sending message to queue: %s", message);
 
@@ -396,11 +399,11 @@ export const sendToQueueConfirmed: MessageProduceFn = (
 };
 
 export async function publish(
-  context: IConnectionContext,
+  context: IChannelCtx,
   message: string,
   routingKey = "",
   options?: Options.Publish
-): Promise<IConnectionContext> {
+): Promise<IChannelCtx> {
   log("Publishing message to an exchange: %s", message);
 
   if (context.exchangeName === undefined) {

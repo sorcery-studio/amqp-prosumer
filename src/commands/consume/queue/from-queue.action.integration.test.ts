@@ -2,7 +2,7 @@ import {
   actionConsumeQueue,
   IConsumeFromQueueCommandOptions,
 } from "./from-queue.action";
-import { OnMessageCallback, ConsumeResult } from "../../../utils/amqp-adapter";
+import { OnMessageClbk } from "../../../utils/amqp-adapter";
 import { createTestAsQueueProducer } from "../../../utils/connected-test";
 
 jest.unmock("amqplib");
@@ -23,7 +23,7 @@ describe("Consume From Queue Action Integration Tests", () => {
           queueName: "test-queue",
         });
 
-      const onMessage: OnMessageCallback = (msg) => {
+      const onMessage: OnMessageClbk = (msg) => {
         expect(msg.content.toString()).toEqual("test-message");
 
         done();
@@ -38,7 +38,7 @@ describe("Consume From Queue Action Integration Tests", () => {
           );
         });
 
-        return Promise.resolve(ConsumeResult.ACK);
+        return Promise.resolve();
       };
 
       const shutdown = await actionConsumeQueue(

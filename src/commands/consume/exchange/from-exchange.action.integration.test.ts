@@ -1,5 +1,5 @@
 import { actionConsumeExchange } from "./from-exchange.action";
-import { OnMessageCallback, ConsumeResult } from "../../../utils/amqp-adapter";
+import { OnMessageClbk } from "../../../utils/amqp-adapter";
 import { connectTestAsExchangeProducer } from "../../../utils/connected-test";
 
 jest.unmock("amqplib");
@@ -27,7 +27,7 @@ describe("Consume From Exchange Action Integration Tests", () => {
           exchangeType: "topic",
         });
 
-      const onMessage: OnMessageCallback = (msg) => {
+      const onMessage: OnMessageClbk = (msg) => {
         expect(msg.content.toString()).toEqual("test-message");
 
         done();
@@ -42,7 +42,7 @@ describe("Consume From Exchange Action Integration Tests", () => {
           );
         });
 
-        return Promise.resolve(ConsumeResult.ACK);
+        return Promise.resolve();
       };
 
       const shutdown = await actionConsumeExchange(

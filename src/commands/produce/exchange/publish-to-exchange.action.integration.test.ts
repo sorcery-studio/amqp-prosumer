@@ -4,7 +4,7 @@ import {
 } from "./publish-to-exchange.action";
 import { InputReaderGen } from "../../../utils/io";
 import { connectTestAsConsumer } from "../../../utils/connected-test";
-import { IConnectionContext, publish } from "../../../utils/amqp-adapter";
+import { IChannelCtx, publish } from "../../../utils/amqp-adapter";
 import { Options } from "amqplib";
 import Publish = Options.Publish;
 
@@ -204,11 +204,11 @@ describe("Produce To Exchange Action", () => {
             cmd,
             readTestInput,
             (
-              ctx: IConnectionContext,
+              ctx: IChannelCtx,
               message: string,
               rKey?: string,
               options?: Publish
-            ): Promise<IConnectionContext> => {
+            ): Promise<IChannelCtx> => {
               expect(ctx.channel).toHaveProperty("waitForConfirms");
               return publish(ctx, message, rKey, options);
             }

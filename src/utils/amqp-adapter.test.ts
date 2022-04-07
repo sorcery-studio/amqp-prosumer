@@ -3,26 +3,24 @@ import {
   cancelConsumer,
   closeChannel,
   connectToBroker,
-  consume,
-  ConsumeResult,
   createChannel,
   createConfirmChannel,
-  createConsumerFn,
+  createConsumer,
   createDefaultChannelEventListeners,
   declareExchange,
   declareQueue,
   disconnectFromBroker,
-  IConnectionContext,
+  IChannelCtx,
   publish,
   sendToQueue,
   sendToQueueConfirmed,
+  startConsumer,
 } from "./amqp-adapter";
 import * as amqp from "amqplib";
 import { Channel, ConfirmChannel, Connection, ConsumeMessage } from "amqplib";
 import { anyFunction, mock, MockProxy } from "jest-mock-extended";
 
-interface MockedIConnectionContext<T extends Channel>
-  extends IConnectionContext {
+interface MockedIConnectionContext<T extends Channel> extends IChannelCtx {
   channel: MockProxy<T>;
   connection: MockProxy<Connection>;
 }
@@ -70,7 +68,7 @@ describe("AMQP FP Adapter", () => {
 
   describe("Channel API", () => {
     function assertProperChannelSetup(
-      ctx: IConnectionContext,
+      ctx: IChannelCtx,
       mockConnection: MockProxy<Connection> & Connection,
       mockChannel:
         | (MockProxy<Channel> & Channel)
@@ -275,7 +273,7 @@ describe("AMQP FP Adapter", () => {
       const onMessage = jest.fn();
       const wrapResult = jest.fn();
       const testWrapper = jest.fn().mockReturnValue(wrapResult);
-      const startConsumer = consume(
+      const start = startConsumer(
         onMessage,
         jest.fn(),
         jest.fn(),
@@ -284,7 +282,7 @@ describe("AMQP FP Adapter", () => {
       );
 
       // Start the consumer
-      const consContext = await startConsumer(ctx);
+      const consContext = await start(ctx);
 
       expect(consContext.consumerTag).toEqual("test-consumer-tag");
       expect(onMessage).not.toBeCalled();
@@ -308,10 +306,10 @@ describe("AMQP FP Adapter", () => {
       const onMessage = jest.fn();
       const wrapResult = jest.fn();
       const testWrapper = jest.fn().mockReturnValue(wrapResult);
-      const startConsumer = consume(onMessage, testWrapper);
+      const start = startConsumer(onMessage, testWrapper);
 
       // Start the consumer
-      await expect(startConsumer(ctx)).rejects.toThrow("Missing queue name");
+      await expect(start(ctx)).rejects.toThrow("Missing queue name");
 
       expect(onMessage).not.toBeCalled();
       expect(testWrapper).not.toBeCalled();
@@ -321,7 +319,7 @@ describe("AMQP FP Adapter", () => {
 
   describe("Wrap message handler function", () => {
     test("It calls the message handler when it's a correct message and ACKs it from the broker", () => {
-      const onMessage = jest.fn().mockResolvedValue(ConsumeResult.ACK);
+      const onMessage = jest.fn().mockResolvedValue(undefined);
       const channel = mock<Channel>();
 
       const onDone = (): void => {
@@ -329,7 +327,7 @@ describe("AMQP FP Adapter", () => {
         expect(channel.ack).toBeCalledWith(msg);
       };
 
-      const wrapped = createConsumerFn(
+      const wrapped = createConsumer(
         channel,
         onMessage,
         onDone,
@@ -342,7 +340,7 @@ describe("AMQP FP Adapter", () => {
     });
 
     test("It does not call the original handler when the consumer is cancelled", () => {
-      const onMessage = jest.fn().mockReturnValue(ConsumeResult.ACK);
+      const onMessage = jest.fn().mockReturnValue(undefined);
       const channel = mock<Channel>();
 
       const onDone = (): void => {
@@ -350,7 +348,7 @@ describe("AMQP FP Adapter", () => {
         expect(channel.ack).not.toBeCalled();
       };
 
-      const wrapped = createConsumerFn(
+      const wrapped = createConsumer(
         channel,
         onMessage,
         onDone,
@@ -372,7 +370,7 @@ describe("AMQP FP Adapter", () => {
         expect(channel.ack).toBeCalledWith(msg);
       };
 
-      const wrapped = createConsumerFn(
+      const wrapped = createConsumer(
         channel,
         onMessage,
         onDone,

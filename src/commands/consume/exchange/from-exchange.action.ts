@@ -4,13 +4,13 @@ import {
   cancelConsumer,
   closeChannel,
   connectToBroker,
-  consume,
+  startConsumer,
   createChannel,
   declareExchange,
   declareQueue,
   disconnectFromBroker,
   IConsumerContext,
-  OnMessageCallback,
+  OnMessageClbk,
 } from "../../../utils/amqp-adapter";
 import {
   registerShutdownHandler,
@@ -43,7 +43,7 @@ function buildExchangeOptionsFrom(
 export async function actionConsumeExchange(
   exchangeName: string,
   command: IConsumeFromExchangeCommandOptions,
-  onMessage: OnMessageCallback = writeMessageToFile,
+  onMessage: OnMessageClbk = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {
@@ -61,6 +61,9 @@ export async function actionConsumeExchange(
       resolve(shutdown);
     };
 
+    // Create a connection, then enhance the connection context - this is implementing state
+    // in FP-style - the state is enhanced in an immutable manner, and passed from one function to
+    // another
     connectToBroker(command.url)
       .then(createChannel)
       .then(declareQueue("", buildDefaultQueueOptions(), true))
@@ -73,7 +76,7 @@ export async function actionConsumeExchange(
         )
       )
       .then(bindQueueAndExchange("#"))
-      .then(consume(onMessage))
+      .then(startConsumer(onMessage))
       .then(registerConsumerShutdown)
       .catch((err) => {
         console.error(err);

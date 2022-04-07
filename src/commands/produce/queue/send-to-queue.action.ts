@@ -6,7 +6,7 @@ import {
   createConfirmChannel,
   declareQueue,
   disconnectFromBroker,
-  IConnectionContext,
+  IChannelCtx,
   MessageProduceFn,
   sendToQueue,
   sendToQueueConfirmed,
@@ -49,7 +49,7 @@ export function sendToQueueAction(
 
   const sendMessages =
     (sendOutput: MessageProduceFn) =>
-    async (context: IConnectionContext): Promise<IConnectionContext> => {
+    async (context: IChannelCtx): Promise<IChannelCtx> => {
       if (typeof context.queueName !== "string") {
         throw new Error("Can't send to queue if the the name is not defined");
       }
