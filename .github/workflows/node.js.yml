@@ -21,9 +21,9 @@ jobs:
           - "5672:5672"
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
 
-    strategy:
-      matrix:
-        node-version: [12.x, 14.x, 16.x]
+#    strategy:
+#      matrix:
+#        node-version: [10.x, 12.x, 14.x, 16.x]
 
     steps:
     - uses: actions/checkout@v2
