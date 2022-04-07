@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { debug } from "debug";
 import { EventEmitter } from "events";
+import { isOfErrorType } from "../utils/amqp-adapter";
 
 export type CommandFactoryFn = (name?: string | undefined) => Command;
 
@@ -16,11 +17,16 @@ const log = debug("amqp-prosumer:shutdown");
 export const EXIT_ERROR_CODE = 1;
 
 export function reportErrorAndExit(
-  err: Error,
+  err: unknown,
   receiver: ExitReceiver = process
 ): never {
   // eslint-disable-next-line no-console
-  console.error("ERROR:", err.message, err.stack);
+  if (isOfErrorType(err)) {
+    console.error("ERROR:", err.message, err.stack);
+  } else {
+    console.error("ERROR:", err);
+  }
+
   receiver.exit(EXIT_ERROR_CODE);
 }
 

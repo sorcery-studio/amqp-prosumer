@@ -5,12 +5,12 @@ import {
   closeChannel,
   connectToBroker,
   consume,
-  ConsumeCallback,
   createChannel,
   declareExchange,
   declareQueue,
   disconnectFromBroker,
   IConsumerContext,
+  OnMessageCallback,
 } from "../../../utils/amqp-adapter";
 import {
   registerShutdownHandler,
@@ -43,7 +43,7 @@ function buildExchangeOptionsFrom(
 export async function actionConsumeExchange(
   exchangeName: string,
   command: IConsumeFromExchangeCommandOptions,
-  onMessage: ConsumeCallback = writeMessageToFile,
+  onMessage: OnMessageCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {

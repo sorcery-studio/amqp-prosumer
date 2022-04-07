@@ -30,7 +30,7 @@ describe("Produce To Queue Action Tests", () => {
     );
   }
 
-  test("it sends a message to the appointed queue", async (done) => {
+  test("it sends a message to the appointed queue", (done) => {
     const cmd = {
       url: "amqp://localhost",
       durable: false,
@@ -39,10 +39,10 @@ describe("Produce To Queue Action Tests", () => {
       confirm: false,
     };
 
-    await runAndAssert(cmd, done);
+    runAndAssert(cmd, done).catch((err) => void done(err));
   });
 
-  test("it sends a message to the appointed queue with confirm mode", async (done) => {
+  test("it sends a message to the appointed queue with confirm mode", (done) => {
     const cmd = {
       url: "amqp://localhost",
       durable: false,
@@ -51,6 +51,6 @@ describe("Produce To Queue Action Tests", () => {
       confirm: true,
     };
 
-    await runAndAssert(cmd, done);
+    runAndAssert(cmd, done).catch((err) => void done(err));
   });
 });

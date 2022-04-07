@@ -7,6 +7,7 @@ import {
   ConsumeResult,
   createChannel,
   createConfirmChannel,
+  createConsumerFn,
   createDefaultChannelEventListeners,
   declareExchange,
   declareQueue,
@@ -15,11 +16,10 @@ import {
   publish,
   sendToQueue,
   sendToQueueConfirmed,
-  wrapMessageHandler,
 } from "./amqp-adapter";
 import * as amqp from "amqplib";
 import { Channel, ConfirmChannel, Connection, ConsumeMessage } from "amqplib";
-import { mock, MockProxy } from "jest-mock-extended";
+import { anyFunction, mock, MockProxy } from "jest-mock-extended";
 
 interface MockedIConnectionContext<T extends Channel>
   extends IConnectionContext {
@@ -275,14 +275,27 @@ describe("AMQP FP Adapter", () => {
       const onMessage = jest.fn();
       const wrapResult = jest.fn();
       const testWrapper = jest.fn().mockReturnValue(wrapResult);
-      const startConsumer = consume(onMessage, testWrapper);
+      const startConsumer = consume(
+        onMessage,
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        testWrapper
+      );
 
       // Start the consumer
       const consContext = await startConsumer(ctx);
 
       expect(consContext.consumerTag).toEqual("test-consumer-tag");
       expect(onMessage).not.toBeCalled();
-      expect(testWrapper).toBeCalledWith(consContext.channel, onMessage);
+      expect(testWrapper).toBeCalledWith(
+        consContext.channel,
+        onMessage,
+        anyFunction(),
+        anyFunction(),
+        anyFunction()
+      );
+
       expect(consContext.channel.consume).toBeCalledWith(qName, wrapResult);
     });
 
@@ -307,44 +320,68 @@ describe("AMQP FP Adapter", () => {
   });
 
   describe("Wrap message handler function", () => {
-    test("It calls the message handler when it's a correct message and ACKs it from the broker", async () => {
-      const onMessage = jest.fn().mockReturnValue(ConsumeResult.ACK);
+    test("It calls the message handler when it's a correct message and ACKs it from the broker", () => {
+      const onMessage = jest.fn().mockResolvedValue(ConsumeResult.ACK);
       const channel = mock<Channel>();
 
-      const wrapped = wrapMessageHandler(channel, onMessage);
+      const onDone = (): void => {
+        expect(onMessage).toBeCalledWith(msg);
+        expect(channel.ack).toBeCalledWith(msg);
+      };
+
+      const wrapped = createConsumerFn(
+        channel,
+        onMessage,
+        onDone,
+        jest.fn(),
+        jest.fn()
+      );
 
       const msg = mock<ConsumeMessage>();
-      await wrapped(msg);
-
-      expect(onMessage).toBeCalledWith(msg);
-      expect(channel.ack).toBeCalledWith(msg);
+      wrapped(msg);
     });
 
-    test("It does not call the original handler when the consumer is cancelled", async () => {
+    test("It does not call the original handler when the consumer is cancelled", () => {
       const onMessage = jest.fn().mockReturnValue(ConsumeResult.ACK);
       const channel = mock<Channel>();
 
-      const wrapped = wrapMessageHandler(channel, onMessage);
+      const onDone = (): void => {
+        expect(onMessage).not.toBeCalled();
+        expect(channel.ack).not.toBeCalled();
+      };
 
-      await wrapped(null);
+      const wrapped = createConsumerFn(
+        channel,
+        onMessage,
+        onDone,
+        jest.fn(),
+        jest.fn()
+      );
 
-      expect(onMessage).not.toBeCalled();
-      expect(channel.ack).not.toBeCalled();
+      wrapped(null);
     });
 
-    test("It handles the situation when the message handler throws an error - still acks the message", async () => {
+    test("It handles the situation when the message handler throws an error - still acks the message", () => {
       const onMessage = jest
         .fn()
         .mockRejectedValue(new Error("Internal Error"));
       const channel = mock<Channel>();
 
-      const wrapped = wrapMessageHandler(channel, onMessage);
+      const onDone = (): void => {
+        expect(onMessage).toBeCalledWith(msg);
+        expect(channel.ack).toBeCalledWith(msg);
+      };
+
+      const wrapped = createConsumerFn(
+        channel,
+        onMessage,
+        onDone,
+        jest.fn(),
+        jest.fn()
+      );
 
       const msg = mock<ConsumeMessage>();
-      await expect(wrapped(msg)).rejects.toThrow("Internal Error");
-
-      expect(onMessage).toBeCalledWith(msg);
-      expect(channel.ack).toBeCalledWith(msg);
+      wrapped(msg);
     });
   });
 

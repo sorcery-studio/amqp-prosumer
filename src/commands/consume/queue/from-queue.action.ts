@@ -4,7 +4,7 @@ import {
   closeChannel,
   connectToBroker,
   consume,
-  ConsumeCallback,
+  OnMessageCallback,
   createChannel,
   declareQueue,
   disconnectFromBroker,
@@ -51,7 +51,7 @@ function buildQueueOptionsFrom(
 export async function actionConsumeQueue(
   queueName: string,
   options: IConsumeFromQueueCommandOptions,
-  onMessage: ConsumeCallback = writeMessageToFile,
+  onMessage: OnMessageCallback = writeMessageToFile,
   regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {

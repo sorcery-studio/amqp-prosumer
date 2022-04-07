@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2022-04-06
+
+### Updates
+
+* Updated dependencies to the latest versions, including security patches
+
 ## [1.0.4] - 2022-03-27
 
 ### Security

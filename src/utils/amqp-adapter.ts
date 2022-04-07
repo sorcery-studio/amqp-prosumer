@@ -32,7 +32,7 @@ export interface IConsumerContext extends IConnectionContext {
   readonly consumerTag: string;
 }
 
-export type MessageConsumer = (msg: amqplib.ConsumeMessage | null) => void;
+export type AmqpLibConsumeFn = (msg: amqplib.ConsumeMessage | null) => void;
 
 /**
  * Represents a callback function which will be called with the message which got consumed
@@ -41,9 +41,7 @@ export type MessageConsumer = (msg: amqplib.ConsumeMessage | null) => void;
  *
  * @return {Promise<ConsumeResult>} Consume result which will determine the faith of the message passed to the consumer
  */
-export type ConsumeCallback = (
-  msg: ConsumeMessage
-) => Promise<ConsumeResult> | ConsumeResult;
+export type OnMessageCallback = (msg: ConsumeMessage) => Promise<ConsumeResult>;
 
 type AnyFunction = (...args: any[]) => any;
 
@@ -99,7 +97,9 @@ export async function connectToBroker(
 
 export function disconnectFromBroker(connection: Connection): Promise<void> {
   log("Disconnecting from broker");
-  return connection.close();
+
+  // Bypassing the issue with Bluebird<void> not being equal to the native Promise<void>
+  return connection.close() as unknown as Promise<void>;
 }
 
 function attachListeners(
@@ -235,11 +235,30 @@ export function bindQueueAndExchange(
   };
 }
 
-export function wrapMessageHandler(
+export function isOfErrorType(err: any): err is Error {
+  return (
+    err.name !== undefined &&
+    err.message !== undefined &&
+    err.stack !== undefined
+  );
+}
+
+export type OnMessageErrorCallback = (err: unknown | Error) => void;
+
+export type OnCancelCallback = () => void;
+
+export type OnDoneCallback = () => void;
+
+export function createConsumerFn(
   channel: Channel,
-  handleMessage: ConsumeCallback
-): MessageConsumer {
-  return async (msg): Promise<void> => {
+  onMessage: OnMessageCallback,
+  onDone: OnDoneCallback,
+  onMessageError: OnMessageErrorCallback,
+  onCancel: OnCancelCallback
+): AmqpLibConsumeFn {
+  return (msg): void => {
+    // Wrapping to have the async/await syntax, but still return a valid MessageConsumer function
+    // It might make more sense to rewrite this to .then .catch .finally
     log("Consumer received a new message '%s'", msg?.content.toString());
 
     if (msg === null) {
@@ -247,34 +266,54 @@ export function wrapMessageHandler(
         "The consumer was cancelled by the server, we should shut down now..."
       );
 
+      onCancel();
+
       return;
     }
 
-    try {
-      log("Invoking consumer callback");
-      const result = await handleMessage(msg);
-      log("Consumer callback invoked, result: %s", result);
-    } catch (err) {
-      log(
-        "Consumer callback failed with error: %s - %s",
-        err.name,
-        err.message
-      );
+    log("Invoking consumer callback");
 
-      throw err;
-    } finally {
-      channel.ack(msg);
-    }
+    onMessage(msg)
+      .then((result) => {
+        log("Consumer callback invoked, result: %s", result);
+      })
+      .catch((err) => {
+        if (isOfErrorType(err)) {
+          log(
+            "Consumer callback failed with error: %s - %s",
+            err.name,
+            err.message
+          );
+        } else {
+          log("An error was caught, but it doesn't seem to be a JS error", err);
+        }
+
+        onMessageError(err);
+      })
+      .finally(() => {
+        channel.ack(msg);
+        onDone();
+      });
   };
 }
 
+const noop = (): void => {
+  return;
+};
+
 /**
- * @param handleMessage The function which will be provided with a legitimate message when one arrives (business logic)
+ * @param onMessage The function which will be provided with a legitimate message when one arrives (business logic)
+ * @param onError The callback which will be executed when the onMessage function ends up with an error
+ * @param onCancel The callback which will be executed once the broker sends a "cancel consumer" message
+ * @param onDone The callback which will be executed once the message is ACK'ed on the broker
  * @param callbackWrapper The wrapper function which implements the logic around the handleMessage function (infrastructure logic)
  */
 export function consume(
-  handleMessage: ConsumeCallback,
-  callbackWrapper = wrapMessageHandler
+  onMessage: OnMessageCallback,
+  onError: OnMessageErrorCallback = noop,
+  onCancel: OnCancelCallback = noop,
+  onDone: OnDoneCallback = noop,
+  callbackWrapper = createConsumerFn
 ): (context: IConnectionContext) => Promise<IConsumerContext> {
   return async (context): Promise<IConsumerContext> => {
     if (typeof context.queueName !== "string") {
@@ -288,7 +327,7 @@ export function consume(
       consumerTag: (
         await context.channel.consume(
           context.queueName,
-          callbackWrapper(context.channel, handleMessage)
+          callbackWrapper(context.channel, onMessage, onDone, onError, onCancel)
         )
       ).consumerTag,
     };
