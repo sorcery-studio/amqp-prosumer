@@ -1,8 +1,18 @@
 # Changelog
 
+## [3.0.0] - 2022-11-19
+
+### Removed
+
+* NodeJS `v12` is no loner supported by the tool, as some dependencies are no longer supporting it
+
+### Updates
+
+* Updated dependencies to the latest versions, including security patches
+
 ## [2.0.0] - 2022-04-07
 
-## Removed
+### Removed
 
 * NodeJS `v10` is no loner supported by the tool, as some dependencies are no longer supporting it
 
