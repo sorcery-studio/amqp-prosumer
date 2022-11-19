@@ -59,7 +59,7 @@ amqp-prosumer consume from-queue ExampleQueue > output.txt
 
 ### Node.JS and RabbitMQ support
 
-The tool is transpiled for Node `>=12`. Each version is integration-tested with the latest RabbitMQ available at Docker Hub.
+The tool is transpiled for Node `>=14`. Each version is integration-tested with the latest RabbitMQ available at Docker Hub.
 
 ## Limitations
 
