@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.1] - 2023-01-10
+
+### Updates
+
+* Updated dependencies to the latest versions, including security patches
+
 ## [3.0.0] - 2022-11-19
 
 ### Removed
