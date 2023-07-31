@@ -35,6 +35,14 @@ jobs:
         run: npm clean-install
       - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
         run: npm audit signatures
+      - name: Run tests and quality assurance
+        run: |
+          npm ci
+          npm run format:check
+          npm run lint
+          npm run test
+      - name: Build the package
+        run: npm run build
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
