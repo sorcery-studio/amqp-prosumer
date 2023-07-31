@@ -6,6 +6,8 @@ on:
       - next
       - alpha
       - beta
+  repository_dispatch:
+    types: [ semantic-release ]
 
 permissions:
   contents: read # for checkout
