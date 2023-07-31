@@ -4,7 +4,7 @@
   "description": "AMQP-based Consumer/Producer tool",
   "repository": {
     "type": "git",
-    "url": "github:SorceryStudio/amqp-prosumer"
+    "url": "github:sorcery-studio/amqp-prosumer"
   },
   "keywords": [
     "amqp",
@@ -14,13 +14,15 @@
     "cli"
   ],
   "bin": {
-    "amqp-prosumer": "./src/index.js"
+    "amqp-prosumer": "./dist/src/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "clean": "rimraf dist/ coverage/",
     "prebuild": "rimraf dist/ coverage/",
     "build": "tsc --project tsconfig.json",
-    "postbuild": "cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "rimraf dist/ coverage/",
     "test": "jest src/",
     "test:coverage": "jest src/ --collectCoverage --no-cache",
@@ -43,6 +45,7 @@
   "devDependencies": {
     "@commitlint/cli": "17.6.7",
     "@commitlint/config-conventional": "17.6.7",
+    "@semantic-release/git": "10.0.1",
     "@types/amqplib": "0.10.1",
     "@types/debug": "4.1.7",
     "@types/jest": "29.2.5",
