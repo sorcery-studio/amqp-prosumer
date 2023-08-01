@@ -1,6 +1,6 @@
 {
   "name": "amqp-prosumer",
-  "version": "3.0.1",
+  "version": "0.0.0",
   "description": "AMQP-based Consumer/Producer tool",
   "repository": {
     "type": "git",
@@ -14,7 +14,7 @@
     "cli"
   ],
   "bin": {
-    "amqp-prosumer": "./dist/src/index.js"
+    "amqp-prosumer": "./dist/index.js"
   },
   "files": [
     "dist",

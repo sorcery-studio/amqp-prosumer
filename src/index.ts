@@ -8,7 +8,7 @@ import fs from "fs";
 type PackageInfo = { version: string };
 
 const pkg = JSON.parse(
-  fs.readFileSync(fs.realpathSync(__dirname + "/../../package.json")).toString()
+  fs.readFileSync(fs.realpathSync(__dirname + "/../package.json")).toString()
 ) as PackageInfo;
 
 createApp(pkg.version, createCommand as CommandFactoryFn)
