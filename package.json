@@ -1,10 +1,10 @@
 {
   "name": "amqp-prosumer",
-  "version": "3.0.1",
+  "version": "0.0.0",
   "description": "AMQP-based Consumer/Producer tool",
   "repository": {
     "type": "git",
-    "url": "github:SorceryStudio/amqp-prosumer"
+    "url": "github:sorcery-studio/amqp-prosumer"
   },
   "keywords": [
     "amqp",
@@ -14,13 +14,17 @@
     "cli"
   ],
   "bin": {
-    "amqp-prosumer": "./src/index.js"
+    "amqp-prosumer": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "!*.test.js",
+    "!__mocks__"
+  ],
   "scripts": {
     "clean": "rimraf dist/ coverage/",
     "prebuild": "rimraf dist/ coverage/",
     "build": "tsc --project tsconfig.json",
-    "postbuild": "cp package*.json README.md LICENSE.md CHANGELOG.md dist/",
     "pretest": "rimraf dist/ coverage/",
     "test": "jest src/",
     "test:coverage": "jest src/ --collectCoverage --no-cache",
@@ -35,11 +39,15 @@
     "qa": "npm run format && npm run lint && npm run test",
     "postinstall": "husky install",
     "prepublishOnly": "pinst --disable",
-    "postpublish": "pinst --enable"
+    "postpublish": "pinst --enable",
+    "commitlint": "commitlint --edit"
   },
   "author": "Grzegorz Godlewski <ggodlewski@sorcerystudio.com>",
   "license": "MIT",
   "devDependencies": {
+    "@commitlint/cli": "17.6.7",
+    "@commitlint/config-conventional": "17.6.7",
+    "@semantic-release/git": "10.0.1",
     "@types/amqplib": "0.10.1",
     "@types/debug": "4.1.7",
     "@types/jest": "29.2.5",
@@ -59,6 +67,7 @@
     "pinst": "3.0.0",
     "prettier": "2.8.2",
     "rimraf": "3.0.2",
+    "semantic-release": "21.0.7",
     "ts-jest": "29.0.3",
     "ts-node": "10.9.1",
     "typescript": "4.9.4"
