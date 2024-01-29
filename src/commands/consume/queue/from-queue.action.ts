@@ -4,7 +4,7 @@ import {
   closeChannel,
   connectToBroker,
   startConsumer,
-  OnMessageClbk,
+  OnMessageCallback,
   createChannel,
   declareQueue,
   disconnectFromBroker,
@@ -29,7 +29,7 @@ export interface IConsumeFromQueueCommandOptions {
 }
 
 function buildQueueOptionsFrom(
-  options: IConsumeFromQueueCommandOptions
+  options: IConsumeFromQueueCommandOptions,
 ): Options.AssertQueue {
   return {
     durable: options.durable,
@@ -51,8 +51,8 @@ function buildQueueOptionsFrom(
 export async function actionConsumeQueue(
   queueName: string,
   options: IConsumeFromQueueCommandOptions,
-  onMessage: OnMessageClbk = writeMessageToFile,
-  regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
+  onMessage: OnMessageCallback = writeMessageToFile,
+  regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler,
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {
     log("Staring the consumer for queue", queueName);
@@ -73,7 +73,7 @@ export async function actionConsumeQueue(
     connectToBroker(options.url)
       .then(createChannel)
       .then(
-        declareQueue(queueName, buildQueueOptionsFrom(options), options.assert)
+        declareQueue(queueName, buildQueueOptionsFrom(options), options.assert),
       )
       .then(startConsumer(onMessage)) // Note: OnMessage could actually be done on rxjs, but that's not the goal of the project
       .then(registerConsumerShutdown)

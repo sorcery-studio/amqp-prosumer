@@ -6,7 +6,7 @@ describe("Consume From Queue Command", () => {
   test("it defines the command, its alias and description", () => {
     expect(command.alias()).toEqual("queue");
     expect(command.description()).toEqual(
-      "Consume messages from a defined queue"
+      "Consume messages from a defined queue",
     );
   });
 

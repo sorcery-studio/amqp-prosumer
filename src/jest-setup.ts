@@ -5,7 +5,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace jest {
     interface Matchers<R> {
-      commandToHaveOption(name: string, value?: any): R;
+      commandToHaveOption(name: string, value?: unknown): R;
     }
   }
 }
@@ -14,7 +14,7 @@ expect.extend({
   commandToHaveOption: (
     received: Command,
     optName: string,
-    optValue?: any
+    optValue?: unknown,
   ): CustomMatcherResult => {
     const opts = received.opts();
     const optNames = Object.keys(opts);

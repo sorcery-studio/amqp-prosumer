@@ -26,7 +26,7 @@ export interface IPublishToExchangeCommandOptions {
 }
 
 function buildExchangeOptionsFrom(
-  options: IPublishToExchangeCommandOptions
+  options: IPublishToExchangeCommandOptions,
 ): Options.AssertExchange {
   return {
     durable: options.durable,
@@ -37,7 +37,7 @@ function buildExchangeOptionsFrom(
 type PublishHeaders = { [key: string]: string };
 
 function parseHeaders(
-  options: IPublishToExchangeCommandOptions
+  options: IPublishToExchangeCommandOptions,
 ): PublishHeaders {
   const parsedHeaders = options.headers?.reduce(
     (prev: PublishHeaders, cur: string) => {
@@ -48,7 +48,7 @@ function parseHeaders(
         [name]: value,
       };
     },
-    {}
+    {},
   );
 
   if (parsedHeaders !== undefined) {
@@ -59,7 +59,7 @@ function parseHeaders(
 }
 
 function buildPublishOptionsFrom(
-  command: IPublishToExchangeCommandOptions
+  command: IPublishToExchangeCommandOptions,
 ): Options.Publish {
   return {
     headers: parseHeaders(command),
@@ -71,7 +71,7 @@ export function actionProduceExchange(
   options: IPublishToExchangeCommandOptions,
   readInput = readInputFile,
   sendOutput = publish,
-  log: Debugger = logger
+  log: Debugger = logger,
 ): void {
   log("Staring the producer action");
 
@@ -90,7 +90,7 @@ export function actionProduceExchange(
     exchangeName,
     options.exchangeType,
     exchangeOptions,
-    options.assert
+    options.assert,
   );
 
   connectToBroker(options.url)
@@ -103,7 +103,7 @@ export function actionProduceExchange(
     .catch((err) =>
       console.error(
         "Publishing to exchange was affected by the following error",
-        err
-      )
+        err,
+      ),
     );
 }

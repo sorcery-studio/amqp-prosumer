@@ -34,13 +34,13 @@ describe("Consume From Queue Action Unit Tests", () => {
 
       // Assert
       expect(stopFunction).toBeInstanceOf(Function);
-      expect(connectSpy).toBeCalledWith(args.url);
-      expect(mockConnection.createChannel).toBeCalled();
-      expect(mockConnection.createConfirmChannel).not.toBeCalled();
-      expect(mockChannel.assertQueue).not.toBeCalled();
-      expect(mockChannel.close).not.toBeCalled();
-      expect(mockChannel.cancel).not.toBeCalled();
-      expect(mockConnection.close).not.toBeCalled();
+      expect(connectSpy).toHaveBeenCalledWith(args.url);
+      expect(mockConnection.createChannel).toHaveBeenCalled();
+      expect(mockConnection.createConfirmChannel).not.toHaveBeenCalled();
+      expect(mockChannel.assertQueue).not.toHaveBeenCalled();
+      expect(mockChannel.close).not.toHaveBeenCalled();
+      expect(mockChannel.cancel).not.toHaveBeenCalled();
+      expect(mockConnection.close).not.toHaveBeenCalled();
     });
 
     test("Establishes the connection to the broker and sets up the channel without and the queue when requested", async () => {
@@ -73,17 +73,17 @@ describe("Consume From Queue Action Unit Tests", () => {
       await actionConsumeQueue("testQueue", args);
 
       // Assert
-      expect(connectSpy).toBeCalledWith(args.url);
-      expect(mockConnection.createChannel).toBeCalled();
-      expect(mockConnection.createConfirmChannel).not.toBeCalled();
-      expect(mockChannel.assertQueue).toBeCalledWith("testQueue", {
+      expect(connectSpy).toHaveBeenCalledWith(args.url);
+      expect(mockConnection.createChannel).toHaveBeenCalled();
+      expect(mockConnection.createConfirmChannel).not.toHaveBeenCalled();
+      expect(mockChannel.assertQueue).toHaveBeenCalledWith("testQueue", {
         autoDelete: false,
         durable: false,
         exclusive: false,
       });
-      expect(mockChannel.close).not.toBeCalled();
-      expect(mockChannel.cancel).not.toBeCalled();
-      expect(mockConnection.close).not.toBeCalled();
+      expect(mockChannel.close).not.toHaveBeenCalled();
+      expect(mockChannel.cancel).not.toHaveBeenCalled();
+      expect(mockConnection.close).not.toHaveBeenCalled();
     });
 
     test("Returns a function which can be used to stop the action", async () => {
@@ -112,9 +112,9 @@ describe("Consume From Queue Action Unit Tests", () => {
       await stopFunction();
 
       // Assert
-      expect(mockChannel.close).toBeCalled();
-      expect(mockChannel.cancel).toBeCalled();
-      expect(mockConnection.close).toBeCalled();
+      expect(mockChannel.close).toHaveBeenCalled();
+      expect(mockChannel.cancel).toHaveBeenCalled();
+      expect(mockConnection.close).toHaveBeenCalled();
     });
 
     describe("Error handling", () => {
@@ -140,13 +140,13 @@ describe("Consume From Queue Action Unit Tests", () => {
 
         // Act
         await expect(actionConsumeQueue("testQueue", opts)).rejects.toThrow(
-          error
+          error,
         );
 
         // Assert
-        expect(errSpy).toBeCalledWith(
+        expect(errSpy).toHaveBeenCalledWith(
           "The consume action encountered an error",
-          error
+          error,
         );
       });
 
@@ -168,13 +168,13 @@ describe("Consume From Queue Action Unit Tests", () => {
 
         // Act
         await expect(actionConsumeQueue("testQueue", opts)).rejects.toThrow(
-          error
+          error,
         );
 
         // Assert
-        expect(errSpy).toBeCalledWith(
+        expect(errSpy).toHaveBeenCalledWith(
           "The consume action encountered an error",
-          error
+          error,
         );
       });
 
@@ -197,13 +197,13 @@ describe("Consume From Queue Action Unit Tests", () => {
 
         // Act
         await expect(actionConsumeQueue("testQueue", opts)).rejects.toThrow(
-          error
+          error,
         );
 
         // Assert
-        expect(errSpy).toBeCalledWith(
+        expect(errSpy).toHaveBeenCalledWith(
           "The consume action encountered an error",
-          error
+          error,
         );
       });
 
@@ -240,7 +240,7 @@ describe("Consume From Queue Action Unit Tests", () => {
         await stop();
 
         // Assert
-        expect(errSpy).toBeCalledWith("Error during shutdown", error);
+        expect(errSpy).toHaveBeenCalledWith("Error during shutdown", error);
       });
 
       test("It logs an error when the channel close fails", async () => {
@@ -276,7 +276,7 @@ describe("Consume From Queue Action Unit Tests", () => {
         await stop();
 
         // Assert
-        expect(errSpy).toBeCalledWith("Error during shutdown", error);
+        expect(errSpy).toHaveBeenCalledWith("Error during shutdown", error);
       });
 
       test("It logs an error when the connection close fails", async () => {
@@ -312,7 +312,7 @@ describe("Consume From Queue Action Unit Tests", () => {
         await stop();
 
         // Assert
-        expect(errSpy).toBeCalledWith("Error during shutdown", error);
+        expect(errSpy).toHaveBeenCalledWith("Error during shutdown", error);
       });
     });
   });

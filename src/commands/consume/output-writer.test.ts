@@ -9,6 +9,6 @@ describe("Output Writer", () => {
     await writeMessageToFile({
       content: Buffer.from("example-message"),
     } as ConsumeMessage);
-    expect(fs.writeFileSync).toBeCalledWith(STDOUT, "example-message\n");
+    expect(fs.writeFileSync).toHaveBeenCalledWith(STDOUT, "example-message\n");
   });
 });

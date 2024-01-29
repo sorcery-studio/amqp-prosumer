@@ -7,7 +7,7 @@ describe("Produce To Exchange Command", () => {
     expect(command.name()).toEqual("publish-to-exchange");
     expect(command.alias()).toEqual("exchange");
     expect(command.description()).toEqual(
-      "Publishes messages to the defined exchange"
+      "Publishes messages to the defined exchange",
     );
   });
 

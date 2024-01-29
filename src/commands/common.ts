@@ -1,7 +1,6 @@
 import { Command } from "commander";
 import { debug } from "debug";
 import { EventEmitter } from "events";
-import { isOfErrorType } from "../utils/amqp-adapter";
 
 export type CommandFactoryFn = (name?: string | undefined) => Command;
 
@@ -18,10 +17,10 @@ export const EXIT_ERROR_CODE = 1;
 
 export function reportErrorAndExit(
   err: unknown,
-  receiver: ExitReceiver = process
+  receiver: ExitReceiver = process,
 ): never {
   // eslint-disable-next-line no-console
-  if (isOfErrorType(err)) {
+  if (err instanceof Error) {
     console.error("ERROR:", err.message, err.stack);
   } else {
     console.error("ERROR:", err);
@@ -34,7 +33,7 @@ export type ShutdownHandlerFn = () => Promise<void>;
 
 export type RegisterShutdownHandlerFn = (
   handler: ShutdownHandlerFn,
-  emitter?: EventEmitter
+  emitter?: EventEmitter,
 ) => void;
 
 /**
@@ -48,7 +47,7 @@ export type RegisterShutdownHandlerFn = (
  */
 export const registerShutdownHandler: RegisterShutdownHandlerFn = (
   handler: ShutdownHandlerFn,
-  emitter: EventEmitter = process
+  emitter: EventEmitter = process,
 ) => {
   ((): void => {
     const shutdown = (): void => {
@@ -58,8 +57,8 @@ export const registerShutdownHandler: RegisterShutdownHandlerFn = (
         .catch((err) =>
           console.error(
             "Error during shutdown handler execution: %s",
-            err.message
-          )
+            err.message,
+          ),
         );
     };
 

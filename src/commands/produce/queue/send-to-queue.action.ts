@@ -25,7 +25,7 @@ export interface ISendToQueueCommandOptions {
 const logger = debug("amqp-prosumer:producer");
 
 function buildQueueOptionsFrom(
-  options: ISendToQueueCommandOptions
+  options: ISendToQueueCommandOptions,
 ): Options.AssertQueue {
   return {
     durable: options.durable,
@@ -37,14 +37,14 @@ export function sendToQueueAction(
   queueName: string,
   options: ISendToQueueCommandOptions,
   readInput = readInputFile,
-  log: Debugger = logger
+  log: Debugger = logger,
 ): void {
   log("Staring the producer action");
 
   const setupQueue = declareQueue(
     queueName,
     buildQueueOptionsFrom(options),
-    options.assert
+    options.assert,
   );
 
   const sendMessages =

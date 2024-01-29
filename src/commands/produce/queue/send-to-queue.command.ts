@@ -11,23 +11,23 @@ export function buildSendToQueueCommand(): commander.Command {
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",
-      "amqp://localhost"
+      "amqp://localhost",
     )
     .option(
       "-a, --assert",
       "Perform assertion of the queue before binding to it",
-      false
+      false,
     )
     .option(
       "-d, --durable",
       "Mark the resulting queue as 'durable' which will make it survive broker restarts",
-      false
+      false,
     )
     .option("--autoDelete", "Marks the used queue for automatic deletion", true)
     .option(
       "--confirm",
       "Use publisher confirms to wait for the broker to confirm if the message was handled",
-      false
+      false,
     )
     .action(sendToQueueAction);
 

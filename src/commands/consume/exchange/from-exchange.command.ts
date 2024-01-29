@@ -18,22 +18,22 @@ export function buildConsumeFromExchangeCommand(): commander.Command {
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",
-      "amqp://localhost"
+      "amqp://localhost",
     )
     .option(
       "-a, --assert",
       "Perform assertion of the exchange before binding to it",
-      false
+      false,
     )
     .option(
       "-d, --durable",
       "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
-      false
+      false,
     )
     .action(
       (exchangeName: string, options: IConsumeFromExchangeCommandOptions) => {
         actionConsumeExchange(exchangeName, options).catch(reportErrorAndExit);
-      }
+      },
     );
 
   return program;

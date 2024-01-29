@@ -25,8 +25,8 @@ describe("Common", () => {
 
       reportErrorAndExit(err, exitReceiver);
 
-      expect(consoleSpy).toBeCalledWith("ERROR:", err.message, err.stack);
-      expect(exitReceiver.exit).toBeCalledWith(EXIT_ERROR_CODE);
+      expect(consoleSpy).toHaveBeenCalledWith("ERROR:", err.message, err.stack);
+      expect(exitReceiver.exit).toHaveBeenCalledWith(EXIT_ERROR_CODE);
     });
   });
 
@@ -50,8 +50,8 @@ describe("Common", () => {
 
         emitter.emit(event);
 
-        expect(handler).toBeCalled();
-      }
+        expect(handler).toHaveBeenCalled();
+      },
     );
   });
 
@@ -68,11 +68,11 @@ describe("Common", () => {
 
     emitter.emit("SIGTERM");
 
-    expect(handler).toBeCalled();
+    expect(handler).toHaveBeenCalled();
     await expect(handler).rejects.toThrow("Something bad happened");
-    expect(errorSpy).toBeCalledWith(
+    expect(errorSpy).toHaveBeenCalledWith(
       "Error during shutdown handler execution: %s",
-      "Something bad happened"
+      "Something bad happened",
     );
   });
 });

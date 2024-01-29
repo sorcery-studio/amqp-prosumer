@@ -9,19 +9,19 @@ describe("Produce Command", () => {
     expect(produce).toBeInstanceOf(Command);
     expect(produce.alias()).toEqual("p");
     expect(produce.description()).toEqual(
-      "Produce messages to a queue or an exchange"
+      "Produce messages to a queue or an exchange",
     );
   });
 
   test("it defines the to-queue sub-command", () => {
     expect(
-      produce.commands.some((cmd) => cmd.name() === "send-to-queue")
+      produce.commands.some((cmd) => cmd.name() === "send-to-queue"),
     ).toEqual(true);
   });
 
   test("it defines the to-exchange sub-command", () => {
     expect(
-      produce.commands.some((cmd) => cmd.name() === "publish-to-exchange")
+      produce.commands.some((cmd) => cmd.name() === "publish-to-exchange"),
     ).toEqual(true);
   });
 });

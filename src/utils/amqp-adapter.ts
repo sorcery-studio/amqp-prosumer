@@ -2,7 +2,7 @@
  * This file serves as a "adapter" layer, for FP-like approach and `amqplib` which is more OOP-oriented
  */
 
-import { debug } from "debug";
+import { debug, Debugger } from "debug";
 import * as amqplib from "amqplib";
 import {
   Channel,
@@ -35,13 +35,22 @@ export type AmqpLibConsume = (msg: amqplib.ConsumeMessage | null) => void;
  *
  * @return {Promise<void>} Consume result which will determine the faith of the message passed to the consumer
  */
-export type OnMessageClbk = (msg: ConsumeMessage) => Promise<void>;
+export type OnMessageCallback = (msg: ConsumeMessage) => Promise<void>;
 
-type AnyFunction = (...args: any[]) => any;
+type AnyFunction = (...args: unknown[]) => void;
+
+type ChannelEventListeners = {
+  close: (err?: Error | string) => void;
+  error: (err: Error | string) => void;
+  return: (msg: ConsumeMessage) => void;
+  drain: () => void;
+  blocked: (reason: string) => void;
+  unblocked: (reason: string) => void;
+};
 
 export function createDefaultChannelEventListeners(
-  dbg: AnyFunction = log
-): Record<string, AnyFunction> {
+  dbg: Debugger = log,
+): ChannelEventListeners {
   const onClose = (serverError?: Error | string): void => {
     dbg("Channel#close()");
 
@@ -97,7 +106,7 @@ export function disconnectFromBroker(connection: Connection): Promise<void> {
 
 function attachListeners(
   channel: Channel,
-  eventListeners: Record<string, AnyFunction> = {}
+  eventListeners: Record<string, AnyFunction> = {},
 ): void {
   const defaultListeners = createDefaultChannelEventListeners(log);
 
@@ -111,7 +120,7 @@ function attachListeners(
 
 export async function createChannel(
   connection: amqplib.Connection,
-  eventListeners: Record<string, AnyFunction> = {}
+  eventListeners: Record<string, AnyFunction> = {},
 ): Promise<IChannelCtx> {
   log("Creating new channel");
   const channel = await connection.createChannel();
@@ -127,7 +136,7 @@ export async function createChannel(
 
 export async function createConfirmChannel(
   connection: amqplib.Connection,
-  eventListeners: Record<string, AnyFunction> = {}
+  eventListeners: Record<string, AnyFunction> = {},
 ): Promise<IChannelCtx> {
   log("Creating new channel");
   const channel = await connection.createConfirmChannel();
@@ -165,7 +174,7 @@ export async function closeChannel(context: IChannelCtx): Promise<Connection> {
 export function declareQueue(
   queueName: string,
   queueOptions: Options.AssertQueue,
-  assert: boolean
+  assert: boolean,
 ): (ctx: IChannelCtx) => Promise<IChannelCtx> {
   return async (context: IChannelCtx): Promise<IChannelCtx> => {
     log("Declaring queue %s", queueName);
@@ -182,7 +191,7 @@ export function declareExchange(
   exchangeName: string,
   type: ExchangeType,
   options: Options.AssertExchange,
-  assert: boolean
+  assert: boolean,
 ): (context: IChannelCtx) => Promise<IChannelCtx> {
   return async (context): Promise<IChannelCtx> => {
     log("Declaring exchange %s", exchangeName);
@@ -197,7 +206,7 @@ export function declareExchange(
 }
 
 export function bindQueueAndExchange(
-  binding = "#"
+  binding = "#",
 ): (ctx: IChannelCtx) => Promise<IChannelCtx> {
   return async (context: IChannelCtx): Promise<IChannelCtx> => {
     if (
@@ -205,7 +214,7 @@ export function bindQueueAndExchange(
       typeof context.exchangeName !== "string"
     ) {
       throw new Error(
-        "Cloud not bind queue with exchange, because one of the names is missing"
+        "Cloud not bind queue with exchange, because one of the names is missing",
       );
     }
 
@@ -213,25 +222,17 @@ export function bindQueueAndExchange(
       "Binding queue %s to exchange %s with %s",
       context.queueName,
       context.exchangeName,
-      binding
+      binding,
     );
 
     await context.channel.bindQueue(
       context.queueName,
       context.exchangeName,
-      binding
+      binding,
     );
 
     return context;
   };
-}
-
-export function isOfErrorType(err: any): err is Error {
-  return (
-    err.name !== undefined &&
-    err.message !== undefined &&
-    err.stack !== undefined
-  );
 }
 
 export type OnErrorClbk = (err: unknown | Error) => void;
@@ -251,10 +252,10 @@ export type OnDoneClbk = () => void;
  */
 export function createConsumer(
   channel: Channel,
-  onMessage: OnMessageClbk,
+  onMessage: OnMessageCallback,
   onDone: OnDoneClbk,
   onMessageError: OnErrorClbk,
-  onCancel: OnCancelClbk
+  onCancel: OnCancelClbk,
 ): AmqpLibConsume {
   return (msg): void => {
     // Wrapping to have the async/await syntax, but still return a valid MessageConsumer function
@@ -263,7 +264,7 @@ export function createConsumer(
 
     if (msg === null) {
       log(
-        "The consumer was cancelled by the server, we should shut down now..."
+        "The consumer was cancelled by the server, we should shut down now...",
       );
 
       onCancel();
@@ -278,11 +279,11 @@ export function createConsumer(
         log("Consumer callback invoked, result: %s", result);
       })
       .catch((err) => {
-        if (isOfErrorType(err)) {
+        if (err instanceof Error) {
           log(
             "Consumer callback failed with error: %s - %s",
             err.name,
-            err.message
+            err.message,
           );
         } else {
           log("An error was caught, but it doesn't seem to be a JS error", err);
@@ -312,11 +313,11 @@ const noop = (): void => {
  * @param consumerFactory The wrapper function which implements the logic around the handleMessage function (infrastructure logic)
  */
 export function startConsumer(
-  onMessage: OnMessageClbk,
+  onMessage: OnMessageCallback,
   onError: OnErrorClbk = noop,
   onCancel: OnCancelClbk = noop,
   onDone: OnDoneClbk = noop,
-  consumerFactory = createConsumer
+  consumerFactory = createConsumer,
 ): (context: IChannelCtx) => Promise<IConsumerContext> {
   return async (context): Promise<IConsumerContext> => {
     if (typeof context.queueName !== "string") {
@@ -330,7 +331,13 @@ export function startConsumer(
       consumerTag: (
         await context.channel.consume(
           context.queueName,
-          consumerFactory(context.channel, onMessage, onDone, onError, onCancel)
+          consumerFactory(
+            context.channel,
+            onMessage,
+            onDone,
+            onError,
+            onCancel,
+          ),
         )
       ).consumerTag,
     };
@@ -338,7 +345,7 @@ export function startConsumer(
 }
 
 export async function cancelConsumer(
-  context: IConsumerContext
+  context: IConsumerContext,
 ): Promise<IConsumerContext> {
   log("Canceling consumer %s", context.consumerTag);
 
@@ -349,12 +356,12 @@ export async function cancelConsumer(
 
 export type MessageProduceFn = (
   context: IChannelCtx,
-  message: string
+  message: string,
 ) => Promise<IChannelCtx>;
 
 export const sendToQueue: MessageProduceFn = async (
   context: IChannelCtx,
-  message: string
+  message: string,
 ): Promise<IChannelCtx> => {
   log("Sending message to queue: %s", message);
 
@@ -375,7 +382,7 @@ export const sendToQueue: MessageProduceFn = async (
 
 export const sendToQueueConfirmed: MessageProduceFn = (
   context: IChannelCtx,
-  message: string
+  message: string,
 ): Promise<IChannelCtx> => {
   return new Promise((resolve, reject) => {
     log("Sending message to queue: %s", message);
@@ -402,7 +409,7 @@ export async function publish(
   context: IChannelCtx,
   message: string,
   routingKey = "",
-  options?: Options.Publish
+  options?: Options.Publish,
 ): Promise<IChannelCtx> {
   log("Publishing message to an exchange: %s", message);
 
@@ -415,12 +422,12 @@ export async function publish(
         context.exchangeName,
         routingKey,
         Buffer.from(message),
-        options
+        options,
       )
     : await context.channel.publish(
         context.exchangeName,
         routingKey,
-        Buffer.from(message)
+        Buffer.from(message),
       );
 
   if (!keepSending) {

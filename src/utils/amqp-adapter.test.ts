@@ -19,6 +19,7 @@ import {
 import * as amqp from "amqplib";
 import { Channel, ConfirmChannel, Connection, ConsumeMessage } from "amqplib";
 import { anyFunction, mock, MockProxy } from "jest-mock-extended";
+import { Debugger } from "debug";
 
 interface MockedIConnectionContext<T extends Channel> extends IChannelCtx {
   channel: MockProxy<T>;
@@ -26,7 +27,7 @@ interface MockedIConnectionContext<T extends Channel> extends IChannelCtx {
 }
 
 function getCtx<T extends Channel = Channel>(
-  ext: Partial<MockedIConnectionContext<T>> = {}
+  ext: Partial<MockedIConnectionContext<T>> = {},
 ): MockedIConnectionContext<T> {
   return {
     channel: mock<T>(),
@@ -50,7 +51,7 @@ describe("AMQP FP Adapter", () => {
 
       const conn = await connectToBroker("amqp://localhost");
 
-      expect(connectSpy).toBeCalledWith("amqp://localhost");
+      expect(connectSpy).toHaveBeenCalledWith("amqp://localhost");
       expect(conn).toEqual(mockConnection);
     });
   });
@@ -61,7 +62,7 @@ describe("AMQP FP Adapter", () => {
 
       const ret = await disconnectFromBroker(mockConnection);
 
-      expect(mockConnection.close).toBeCalled();
+      expect(mockConnection.close).toHaveBeenCalled();
       expect(ret).toBeUndefined();
     });
   });
@@ -72,7 +73,7 @@ describe("AMQP FP Adapter", () => {
       mockConnection: MockProxy<Connection> & Connection,
       mockChannel:
         | (MockProxy<Channel> & Channel)
-        | (MockProxy<ConfirmChannel> & ConfirmChannel)
+        | (MockProxy<ConfirmChannel> & ConfirmChannel),
     ): void | never {
       expect(ctx.connection).toEqual(mockConnection);
       expect(ctx.channel).toEqual(mockChannel);
@@ -87,7 +88,10 @@ describe("AMQP FP Adapter", () => {
       ];
 
       events.forEach((event) => {
-        expect(mockChannel.on).toBeCalledWith(event, expect.any(Function));
+        expect(mockChannel.on).toHaveBeenCalledWith(
+          event,
+          expect.any(Function),
+        );
       });
     }
 
@@ -124,7 +128,7 @@ describe("AMQP FP Adapter", () => {
 
       const conn = await closeChannel(ctx);
 
-      expect(ctx.channel.close).toBeCalled();
+      expect(ctx.channel.close).toHaveBeenCalled();
       expect(conn).toBe(ctx.connection);
     });
   });
@@ -143,7 +147,7 @@ describe("AMQP FP Adapter", () => {
       expect(qCtx.queueName).toBe(qName);
       expect(qCtx.connection).toBe(ctx.connection);
       expect(qCtx.channel).toBe(ctx.channel);
-      expect(qCtx.channel.assertQueue).not.toBeCalled();
+      expect(qCtx.channel.assertQueue).not.toHaveBeenCalled();
     });
 
     test("It returns the asserted queue name passed when assert is set to true", async () => {
@@ -164,7 +168,7 @@ describe("AMQP FP Adapter", () => {
       expect(qCtx.queueName).toBe(qAssertedName);
       expect(qCtx.connection).toBe(ctx.connection);
       expect(qCtx.channel).toBe(ctx.channel);
-      expect(qCtx.channel.assertQueue).toBeCalledWith("", qOpts);
+      expect(qCtx.channel.assertQueue).toHaveBeenCalledWith("", qOpts);
     });
   });
 
@@ -183,7 +187,7 @@ describe("AMQP FP Adapter", () => {
       expect(exCtx.exchangeName).toBe(exName);
       expect(exCtx.connection).toBe(ctx.connection);
       expect(exCtx.channel).toBe(ctx.channel);
-      expect(exCtx.channel.assertExchange).not.toBeCalled();
+      expect(exCtx.channel.assertExchange).not.toHaveBeenCalled();
     });
 
     test("It returns the asserted exchange name passed when assert is set to true", async () => {
@@ -204,10 +208,10 @@ describe("AMQP FP Adapter", () => {
       expect(exCtx.exchangeName).toBe(exAssertedName);
       expect(exCtx.connection).toBe(ctx.connection);
       expect(exCtx.channel).toBe(ctx.channel);
-      expect(exCtx.channel.assertExchange).toBeCalledWith(
+      expect(exCtx.channel.assertExchange).toHaveBeenCalledWith(
         exName,
         exType,
-        exOpts
+        exOpts,
       );
     });
   });
@@ -223,10 +227,10 @@ describe("AMQP FP Adapter", () => {
 
       const ctx = await binder(correctCtx);
 
-      expect(correctCtx.channel.bindQueue).toBeCalledWith(
+      expect(correctCtx.channel.bindQueue).toHaveBeenCalledWith(
         correctCtx.queueName,
         correctCtx.exchangeName,
-        "#"
+        "#",
       );
 
       expect(ctx).toBe(correctCtx);
@@ -246,13 +250,13 @@ describe("AMQP FP Adapter", () => {
           binder({
             ...correctCtx,
             [undefProp]: undefined,
-          })
+          }),
         ).rejects.toThrow(
-          "Cloud not bind queue with exchange, because one of the names is missing"
+          "Cloud not bind queue with exchange, because one of the names is missing",
         );
 
-        expect(correctCtx.channel.bindQueue).not.toBeCalled();
-      }
+        expect(correctCtx.channel.bindQueue).not.toHaveBeenCalled();
+      },
     );
   });
 
@@ -278,23 +282,26 @@ describe("AMQP FP Adapter", () => {
         jest.fn(),
         jest.fn(),
         jest.fn(),
-        testWrapper
+        testWrapper,
       );
 
       // Start the consumer
       const consContext = await start(ctx);
 
       expect(consContext.consumerTag).toEqual("test-consumer-tag");
-      expect(onMessage).not.toBeCalled();
-      expect(testWrapper).toBeCalledWith(
+      expect(onMessage).not.toHaveBeenCalled();
+      expect(testWrapper).toHaveBeenCalledWith(
         consContext.channel,
         onMessage,
         anyFunction(),
         anyFunction(),
-        anyFunction()
+        anyFunction(),
       );
 
-      expect(consContext.channel.consume).toBeCalledWith(qName, wrapResult);
+      expect(consContext.channel.consume).toHaveBeenCalledWith(
+        qName,
+        wrapResult,
+      );
     });
 
     test("Throws an error when the connection context does not contain a queue to consume", async () => {
@@ -311,9 +318,9 @@ describe("AMQP FP Adapter", () => {
       // Start the consumer
       await expect(start(ctx)).rejects.toThrow("Missing queue name");
 
-      expect(onMessage).not.toBeCalled();
-      expect(testWrapper).not.toBeCalled();
-      expect(ctx.channel.consume).not.toBeCalled();
+      expect(onMessage).not.toHaveBeenCalled();
+      expect(testWrapper).not.toHaveBeenCalled();
+      expect(ctx.channel.consume).not.toHaveBeenCalled();
     });
   });
 
@@ -323,8 +330,8 @@ describe("AMQP FP Adapter", () => {
       const channel = mock<Channel>();
 
       const onDone = (): void => {
-        expect(onMessage).toBeCalledWith(msg);
-        expect(channel.ack).toBeCalledWith(msg);
+        expect(onMessage).toHaveBeenCalledWith(msg);
+        expect(channel.ack).toHaveBeenCalledWith(msg);
       };
 
       const wrapped = createConsumer(
@@ -332,7 +339,7 @@ describe("AMQP FP Adapter", () => {
         onMessage,
         onDone,
         jest.fn(),
-        jest.fn()
+        jest.fn(),
       );
 
       const msg = mock<ConsumeMessage>();
@@ -344,8 +351,8 @@ describe("AMQP FP Adapter", () => {
       const channel = mock<Channel>();
 
       const onDone = (): void => {
-        expect(onMessage).not.toBeCalled();
-        expect(channel.ack).not.toBeCalled();
+        expect(onMessage).not.toHaveBeenCalled();
+        expect(channel.ack).not.toHaveBeenCalled();
       };
 
       const wrapped = createConsumer(
@@ -353,7 +360,7 @@ describe("AMQP FP Adapter", () => {
         onMessage,
         onDone,
         jest.fn(),
-        jest.fn()
+        jest.fn(),
       );
 
       wrapped(null);
@@ -366,8 +373,8 @@ describe("AMQP FP Adapter", () => {
       const channel = mock<Channel>();
 
       const onDone = (): void => {
-        expect(onMessage).toBeCalledWith(msg);
-        expect(channel.ack).toBeCalledWith(msg);
+        expect(onMessage).toHaveBeenCalledWith(msg);
+        expect(channel.ack).toHaveBeenCalledWith(msg);
       };
 
       const wrapped = createConsumer(
@@ -375,7 +382,7 @@ describe("AMQP FP Adapter", () => {
         onMessage,
         onDone,
         jest.fn(),
-        jest.fn()
+        jest.fn(),
       );
 
       const msg = mock<ConsumeMessage>();
@@ -396,10 +403,10 @@ describe("AMQP FP Adapter", () => {
 
       const result = await publish(correctCtx, msg);
 
-      expect(correctCtx.channel.publish).toBeCalledWith(
+      expect(correctCtx.channel.publish).toHaveBeenCalledWith(
         "test-exchange",
         "",
-        expect.any(Buffer)
+        expect.any(Buffer),
       );
       expect(result).toBe(correctCtx);
     });
@@ -421,10 +428,10 @@ describe("AMQP FP Adapter", () => {
 
       const result = await publish(correctCtx, msg);
 
-      expect(correctCtx.channel.publish).toBeCalledWith(
+      expect(correctCtx.channel.publish).toHaveBeenCalledWith(
         "test-exchange",
         "",
-        expect.any(Buffer)
+        expect.any(Buffer),
       );
 
       expect(result).toBe(correctCtx);
@@ -447,13 +454,13 @@ describe("AMQP FP Adapter", () => {
 
       const result = await publish(correctCtx, msg, "", { headers });
 
-      expect(correctCtx.channel.publish).toBeCalledWith(
+      expect(correctCtx.channel.publish).toHaveBeenCalledWith(
         "test-exchange",
         "",
         expect.any(Buffer),
         {
           headers,
-        }
+        },
       );
       expect(result).toBe(correctCtx);
     });
@@ -467,10 +474,10 @@ describe("AMQP FP Adapter", () => {
       const msg = "test-message";
 
       await expect(publish(brokenContext, msg)).rejects.toThrow(
-        "Missing exchange name"
+        "Missing exchange name",
       );
 
-      expect(brokenContext.channel.publish).not.toBeCalled();
+      expect(brokenContext.channel.publish).not.toHaveBeenCalled();
     });
   });
 
@@ -485,9 +492,9 @@ describe("AMQP FP Adapter", () => {
 
       const ret = await sendToQueue(ctx, message);
 
-      expect(ctx.channel.sendToQueue).toBeCalledWith(
+      expect(ctx.channel.sendToQueue).toHaveBeenCalledWith(
         "test-queue-name",
-        expect.any(Buffer)
+        expect.any(Buffer),
       );
 
       expect(ret).toBe(ctx);
@@ -507,9 +514,9 @@ describe("AMQP FP Adapter", () => {
 
       const ret = await sendToQueue(ctx, message);
 
-      expect(ctx.channel.sendToQueue).toBeCalledWith(
+      expect(ctx.channel.sendToQueue).toHaveBeenCalledWith(
         "test-queue-name",
-        expect.any(Buffer)
+        expect.any(Buffer),
       );
       expect(ret).toBe(ctx);
     });
@@ -523,10 +530,10 @@ describe("AMQP FP Adapter", () => {
       ctx.channel.sendToQueue.mockReturnValue(true);
 
       await expect(sendToQueue(ctx, message)).rejects.toThrow(
-        "Missing queue name"
+        "Missing queue name",
       );
 
-      expect(ctx.channel.sendToQueue).not.toBeCalled();
+      expect(ctx.channel.sendToQueue).not.toHaveBeenCalled();
     });
   });
 
@@ -543,16 +550,16 @@ describe("AMQP FP Adapter", () => {
             callback(undefined, {});
           }
           return true;
-        }
+        },
       );
 
       const ret = await sendToQueueConfirmed(ctx, message);
 
-      expect(ctx.channel.sendToQueue).toBeCalledWith(
+      expect(ctx.channel.sendToQueue).toHaveBeenCalledWith(
         "test-queue-name",
         expect.any(Buffer),
         {},
-        expect.any(Function)
+        expect.any(Function),
       );
 
       expect(ret).toBe(ctx);
@@ -567,10 +574,10 @@ describe("AMQP FP Adapter", () => {
       ctx.channel.sendToQueue.mockReturnValue(true);
 
       await expect(sendToQueueConfirmed(ctx, message)).rejects.toThrow(
-        "Missing queue name"
+        "Missing queue name",
       );
 
-      expect(ctx.channel.sendToQueue).not.toBeCalled();
+      expect(ctx.channel.sendToQueue).not.toHaveBeenCalled();
     });
 
     test("It rejects with Error when the the server will nack the message", async () => {
@@ -586,16 +593,16 @@ describe("AMQP FP Adapter", () => {
             callback(err, {});
           }
           return true;
-        }
+        },
       );
 
       await expect(sendToQueueConfirmed(ctx, message)).rejects.toThrow(err);
 
-      expect(ctx.channel.sendToQueue).toBeCalledWith(
+      expect(ctx.channel.sendToQueue).toHaveBeenCalledWith(
         "test-queue-name",
         expect.any(Buffer),
         {},
-        expect.any(Function)
+        expect.any(Function),
       );
     });
   });
@@ -608,56 +615,56 @@ describe("AMQP FP Adapter", () => {
       };
       const ret = await cancelConsumer(ctx);
 
-      expect(ctx.channel.cancel).toBeCalledWith(ctx.consumerTag);
+      expect(ctx.channel.cancel).toHaveBeenCalledWith(ctx.consumerTag);
       expect(ret).toBe(ctx);
     });
   });
 
   describe("Default channel event listeners", () => {
-    const mockLog = jest.fn();
+    const mockLog = jest.fn() as unknown as Debugger;
 
     const listeners = createDefaultChannelEventListeners(mockLog);
 
     test("onClose logs the information", () => {
       listeners["close"]();
-      expect(mockLog).toBeCalledWith("Channel#close()");
+      expect(mockLog).toHaveBeenCalledWith("Channel#close()");
     });
 
     test("onClose logs the information if the server error was passed", () => {
       const err = new Error("Some server error");
       listeners["close"](err);
-      expect(mockLog).toBeCalledWith("Channel#close()");
-      expect(mockLog).toBeCalledWith(
+      expect(mockLog).toHaveBeenCalledWith("Channel#close()");
+      expect(mockLog).toHaveBeenCalledWith(
         "Received Channel#close() with error",
-        err
+        err,
       );
     });
 
     test("onError logs the error", () => {
       const err = new Error("Example error");
       listeners["error"](err);
-      expect(mockLog).toBeCalledWith("Channel#error()", err);
+      expect(mockLog).toHaveBeenCalledWith("Channel#error()", err);
     });
 
     test("onReturn logs the information about returned message", () => {
       const msg = mock<ConsumeMessage>();
       listeners["return"](msg);
-      expect(mockLog).toBeCalledWith("Channel#return()", msg);
+      expect(mockLog).toHaveBeenCalledWith("Channel#return()", msg);
     });
 
     test("onDrain logs the information about the event", () => {
       listeners["drain"]();
-      expect(mockLog).toBeCalledWith("Channel#drain()");
+      expect(mockLog).toHaveBeenCalledWith("Channel#drain()");
     });
 
     test("onBlocked logs the information about the event", () => {
       listeners["blocked"]("reason");
-      expect(mockLog).toBeCalledWith("Channel#blocked()", "reason");
+      expect(mockLog).toHaveBeenCalledWith("Channel#blocked()", "reason");
     });
 
     test("onUnblocked logs the information about the event", () => {
       listeners["unblocked"]("reason");
-      expect(mockLog).toBeCalledWith("Channel#unblocked()", "reason");
+      expect(mockLog).toHaveBeenCalledWith("Channel#unblocked()", "reason");
     });
   });
 });

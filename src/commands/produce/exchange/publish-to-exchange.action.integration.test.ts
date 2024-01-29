@@ -15,7 +15,7 @@ const readTestInput: InputReaderGen = function* () {
 };
 
 function createCommand(
-  opts: Partial<IPublishToExchangeCommandOptions>
+  opts: Partial<IPublishToExchangeCommandOptions>,
 ): IPublishToExchangeCommandOptions {
   const baseCommand: IPublishToExchangeCommandOptions = {
     url: "amqp://localhost",
@@ -53,7 +53,7 @@ describe("Produce To Exchange Action", () => {
             exchangeName,
             exchangeType,
             routingKey: "some-topic",
-          }
+          },
         );
 
       await runAndListenForMessage(
@@ -61,7 +61,7 @@ describe("Produce To Exchange Action", () => {
         (text) => {
           expect(text).toEqual("test-message");
           done();
-        }
+        },
       );
 
       await disconnectTestFromBroker();
@@ -87,7 +87,7 @@ describe("Produce To Exchange Action", () => {
             exchangeName,
             exchangeType,
             routingKey,
-          }
+          },
         );
 
       await runAndListenForMessage(
@@ -95,7 +95,7 @@ describe("Produce To Exchange Action", () => {
         (text) => {
           expect(text).toEqual("test-message");
           done();
-        }
+        },
       );
 
       await disconnectTestFromBroker();
@@ -121,7 +121,7 @@ describe("Produce To Exchange Action", () => {
             exchangeName,
             exchangeType,
             routingKey,
-          }
+          },
         );
 
       await runAndListenForMessage(
@@ -129,7 +129,7 @@ describe("Produce To Exchange Action", () => {
         (text) => {
           expect(text).toEqual("test-message");
           done();
-        }
+        },
       );
 
       await disconnectTestFromBroker();
@@ -159,7 +159,7 @@ describe("Produce To Exchange Action", () => {
               headerA: "A",
               headerB: "B",
             },
-          }
+          },
         );
 
       await runAndListenForMessage(
@@ -167,7 +167,7 @@ describe("Produce To Exchange Action", () => {
         (text) => {
           expect(text).toEqual("test-message");
           done();
-        }
+        },
       );
 
       await disconnectTestFromBroker();
@@ -194,7 +194,7 @@ describe("Produce To Exchange Action", () => {
             exchangeName,
             exchangeType,
             routingKey,
-          }
+          },
         );
 
       await runAndListenForMessage(
@@ -207,16 +207,16 @@ describe("Produce To Exchange Action", () => {
               ctx: IChannelCtx,
               message: string,
               rKey?: string,
-              options?: Publish
+              options?: Publish,
             ): Promise<IChannelCtx> => {
               expect(ctx.channel).toHaveProperty("waitForConfirms");
               return publish(ctx, message, rKey, options);
-            }
+            },
           ),
         (text) => {
           expect(text).toEqual("test-message");
           done();
-        }
+        },
       );
 
       await disconnectTestFromBroker();

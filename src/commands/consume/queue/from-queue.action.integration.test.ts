@@ -2,7 +2,7 @@ import {
   actionConsumeQueue,
   IConsumeFromQueueCommandOptions,
 } from "./from-queue.action";
-import { OnMessageClbk } from "../../../utils/amqp-adapter";
+import { OnMessageCallback } from "../../../utils/amqp-adapter";
 import { createTestAsQueueProducer } from "../../../utils/connected-test";
 
 jest.unmock("amqplib");
@@ -23,7 +23,7 @@ describe("Consume From Queue Action Integration Tests", () => {
           queueName: "test-queue",
         });
 
-      const onMessage: OnMessageClbk = (msg) => {
+      const onMessage: OnMessageCallback = (msg) => {
         expect(msg.content.toString()).toEqual("test-message");
 
         done();
@@ -33,8 +33,8 @@ describe("Consume From Queue Action Integration Tests", () => {
           shutdown().catch((err) =>
             console.log(
               "Error while shutting down the AMQP connection from the test",
-              err
-            )
+              err,
+            ),
           );
         });
 
@@ -44,7 +44,7 @@ describe("Consume From Queue Action Integration Tests", () => {
       const shutdown = await actionConsumeQueue(
         "test-queue",
         cmd as IConsumeFromQueueCommandOptions,
-        onMessage
+        onMessage,
       );
 
       sendTestMessage("test-message");

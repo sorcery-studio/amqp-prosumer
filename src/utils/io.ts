@@ -12,7 +12,7 @@ const STDIN = 0;
  * @returns String representing a line of input
  */
 export const readInputFile: InputReaderGen = function* (
-  inputFile: string | number = STDIN
+  inputFile: string | number = STDIN,
 ): Generator<string> {
   const messages = fs
     .readFileSync(inputFile, "utf-8")

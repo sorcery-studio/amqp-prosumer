@@ -10,7 +10,7 @@ import {
   declareQueue,
   disconnectFromBroker,
   IConsumerContext,
-  OnMessageClbk,
+  OnMessageCallback,
 } from "../../../utils/amqp-adapter";
 import {
   registerShutdownHandler,
@@ -32,7 +32,7 @@ function buildDefaultQueueOptions(): Options.AssertQueue {
 }
 
 function buildExchangeOptionsFrom(
-  command: IConsumeFromExchangeCommandOptions
+  command: IConsumeFromExchangeCommandOptions,
 ): Options.AssertExchange {
   return {
     durable: command.durable,
@@ -43,8 +43,8 @@ function buildExchangeOptionsFrom(
 export async function actionConsumeExchange(
   exchangeName: string,
   command: IConsumeFromExchangeCommandOptions,
-  onMessage: OnMessageClbk = writeMessageToFile,
-  regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler
+  onMessage: OnMessageCallback = writeMessageToFile,
+  regShutdown: RegisterShutdownHandlerFn = registerShutdownHandler,
 ): Promise<ShutdownHandlerFn> {
   return new Promise((resolve, reject) => {
     log("Staring the consumer for exchange", exchangeName);
@@ -72,8 +72,8 @@ export async function actionConsumeExchange(
           exchangeName,
           "topic",
           buildExchangeOptionsFrom(command),
-          command.assert
-        )
+          command.assert,
+        ),
       )
       .then(bindQueueAndExchange("#"))
       .then(startConsumer(onMessage))

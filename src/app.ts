@@ -5,7 +5,7 @@ import { CommandFactoryFn } from "./commands/common";
 
 export function createApp(
   version: string,
-  cmdFactory: CommandFactoryFn
+  cmdFactory: CommandFactoryFn,
 ): Command {
   const program = cmdFactory();
 

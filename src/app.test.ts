@@ -18,6 +18,6 @@ describe("AMQP ProSumer", () => {
   });
 
   // test("it parses the command line arguments", () => {
-  //   expect(mockCommand.parseAsync).toBeCalledTimes(1);
+  //   expect(mockCommand.parseAsync).toHaveBeenCalledTimes(1);
   // });
 });

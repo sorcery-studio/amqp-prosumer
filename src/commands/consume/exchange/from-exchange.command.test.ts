@@ -10,7 +10,7 @@ describe("Consume From Exchange Command", () => {
   test("it defines the command, its alias and description", () => {
     expect(command.alias()).toEqual("exchange");
     expect(command.description()).toEqual(
-      "Consume messages published to a exchange"
+      "Consume messages published to a exchange",
     );
   });
 

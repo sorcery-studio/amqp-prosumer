@@ -17,7 +17,7 @@ interface IProduceToQueueTest extends IConnectedTest {
 interface IConsumerTest extends IConnectedTest {
   runAndListenForMessage(
     when: () => Promise<void> | void,
-    then: (message: string) => Promise<void> | void
+    then: (message: string) => Promise<void> | void,
   ): Promise<void>;
 }
 
@@ -39,7 +39,7 @@ interface IBindToExchangeOptions {
   exchangeName: string;
   exchangeType: ExchangeType;
   routingKey: string;
-  bindArgs?: any;
+  bindArgs?: Record<string, string>;
 }
 
 const TEMPORARY_ENTITY = {
@@ -65,14 +65,14 @@ async function connect(): Promise<{
 }
 
 export async function connectTestAsExchangeProducer(
-  options: IProduceToExchangeOptions
+  options: IProduceToExchangeOptions,
 ): Promise<IProduceToExchangeTest> {
   const { channel, disconnect } = await connect();
 
   const exchange = await channel.assertExchange(
     options.exchangeName,
     options.exchangeType,
-    TEMPORARY_ENTITY
+    TEMPORARY_ENTITY,
   );
 
   function publishTestMessage(msg: string): void {
@@ -86,7 +86,7 @@ export async function connectTestAsExchangeProducer(
 }
 
 export async function createTestAsQueueProducer(
-  options: IProduceToQueueOptions
+  options: IProduceToQueueOptions,
 ): Promise<IProduceToQueueTest> {
   const { channel, disconnect } = await connect();
 
@@ -104,33 +104,33 @@ export async function createTestAsQueueProducer(
 
 export async function connectTestAsConsumer(
   queueOptions: IConsumeQueueOptions,
-  exchangeOptions?: IBindToExchangeOptions
+  exchangeOptions?: IBindToExchangeOptions,
 ): Promise<IConsumerTest> {
   const { channel, disconnect } = await connect();
 
   const queue = await channel.assertQueue(
     queueOptions.queueName,
-    TEMPORARY_ENTITY
+    TEMPORARY_ENTITY,
   );
 
   if (exchangeOptions) {
     const exchange = await channel.assertExchange(
       exchangeOptions.exchangeName,
       exchangeOptions.exchangeType,
-      TEMPORARY_ENTITY
+      TEMPORARY_ENTITY,
     );
 
     await channel.bindQueue(
       queue.queue,
       exchange.exchange,
       exchangeOptions.routingKey,
-      exchangeOptions.bindArgs
+      exchangeOptions.bindArgs,
     );
   }
 
   function runAndListenForMessage(
     actionToRun: () => Promise<void> | void,
-    assertionsToMake: (message: string) => void
+    assertionsToMake: (message: string) => void,
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const onMessage = (msg: ConsumeMessage | null): void => {

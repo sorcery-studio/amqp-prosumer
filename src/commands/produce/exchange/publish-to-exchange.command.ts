@@ -15,33 +15,33 @@ export function buildPublishToExchangeCommand(): commander.Command {
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",
-      "amqp://localhost"
+      "amqp://localhost",
     )
     .option(
       "-a, --assert",
       "Perform assertion of the exchange before binding to it",
-      false
+      false,
     )
     .option(
       "-d, --durable",
       "Mark the resulting exchange as 'durable' which will make it survive broker restarts",
-      false
+      false,
     )
     .option(
       "-t, --exchangeType <type>",
       "Set the type of the exchange",
-      "topic"
+      "topic",
     )
     .option(
       "-r, --routingKey <key>",
       "Set the routing key for each published message",
-      ""
+      "",
     )
     .option("--headers <header...>", "Set the following headers on the message")
     .option(
       "--confirm",
       "Use publisher confirms to wait for the broker to confirm if the message was handled",
-      false
+      false,
     )
     .action(
       (exchangeName: string, options: IPublishToExchangeCommandOptions) => {
@@ -50,7 +50,7 @@ export function buildPublishToExchangeCommand(): commander.Command {
         } catch (err) {
           reportErrorAndExit(err);
         }
-      }
+      },
     );
 
   return program;

@@ -29,7 +29,7 @@ describe("Index", () => {
   test("it runs the main command", () => {
     // eslint-disable-next-line node/no-missing-require
     require("./index");
-    expect(mockCreateApp).toBeCalled();
-    expect(mockParseAsync).toBeCalled();
+    expect(mockCreateApp).toHaveBeenCalled();
+    expect(mockParseAsync).toHaveBeenCalled();
   });
 });

@@ -8,7 +8,7 @@ jest.unmock("amqplib");
 describe("Produce To Queue Action Tests", () => {
   async function runAndAssert(
     cmd: ISendToQueueCommandOptions,
-    done: jest.DoneCallback
+    done: jest.DoneCallback,
   ): Promise<void> {
     const { runAndListenForMessage, disconnectTestFromBroker } =
       await connectTestAsConsumer({
@@ -26,7 +26,7 @@ describe("Produce To Queue Action Tests", () => {
         expect(text).toEqual("test-message");
         await disconnectTestFromBroker();
         done();
-      }
+      },
     );
   }
 

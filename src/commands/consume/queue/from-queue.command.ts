@@ -15,27 +15,27 @@ export function buildConsumeFromQueueCommand(): commander.Command {
     .option(
       "-u, --url <url>",
       "The URL to the RabbitMQ instance",
-      "amqp://localhost"
+      "amqp://localhost",
     )
     .option(
       "-a, --assert",
       "Perform assertion of the queue before binding to it",
-      false
+      false,
     )
     .option(
       "-x, --exclusive",
       "Make sure that the queue is going to be 'exclusive' and no other consumer will be able to use it",
-      false
+      false,
     )
     .option(
       "-d, --durable",
       "Mark the resulting queue as 'durable' which will make it survive broker restarts",
-      false
+      false,
     )
     .option(
       "-a, --autoDelete",
       "Mark the resulting queue for automatic delete when if there will be no consumers",
-      true
+      true,
     )
     .action((queueName: string, options: IConsumeFromQueueCommandOptions) => {
       actionConsumeQueue(queueName, options).catch(reportErrorAndExit);
