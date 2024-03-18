@@ -74,7 +74,7 @@
   },
   "dependencies": {
     "amqplib": "^0.10.3",
-    "commander": "^11.1.0",
+    "commander": "^12.0.0",
     "debug": "^4.3.4"
   },
   "engines": {
